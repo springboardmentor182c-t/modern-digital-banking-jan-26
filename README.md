@@ -1,6 +1,6 @@
 # modern-digital-banking-jan-26
 The Admin and user interface for this project was designed and finalized using Figma. 
-The design follows a clean andprofessional layout and ensures consistency across all modules.
+The design follows a clean and professional layout and ensures consistency across all modules.
 
 ### Tool Used
 - Figma
