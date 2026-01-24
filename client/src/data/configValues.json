@@ -1,0 +1,5 @@
+{
+  "apiEndpoint": "http://localhost:8000/api",
+  "appName": "Modern Banking",
+  "version": "1.0.0"
+}

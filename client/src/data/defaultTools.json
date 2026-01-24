@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "name": "Dashboard",
+    "icon": "dashboard"
+  },
+  {
+    "id": 2,
+    "name": "Transactions",
+    "icon": "transactions"
+  },
+  {
+    "id": 3,
+    "name": "Settings",
+    "icon": "settings"
+  }
+]
