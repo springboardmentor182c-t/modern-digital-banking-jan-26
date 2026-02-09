@@ -1,0 +1,16 @@
+node_modules/
+/Digital Banking Dashboard UI/dist/
+build/
+out/
+venv/
+.env
+.env.local
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+# Ignore everything inside the uploads folder
+server/src/uploads/*
+
+# Except for a hidden file to keep the folder structure alive on GitHub
+!server/src/uploads/.gitkeep
