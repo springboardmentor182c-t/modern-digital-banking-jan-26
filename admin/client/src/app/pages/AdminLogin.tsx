@@ -1,22 +1,71 @@
-import { useState } from 'react';
-import { Card } from '../app/components/ui/card';
-import { Input } from '../app/components/ui/input';
-import { Button } from '../app/components/ui/button';
-import { Checkbox } from '../app/components/ui/checkbox';
+import { useState, useEffect } from 'react';
+import { Card } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button';
+import { Checkbox } from '../components/ui/checkbox';
 import { Landmark, Shield } from 'lucide-react';
-import { Badge } from '../app/components/ui/badge';
+import { Badge } from '../components/ui/badge';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
 interface AdminLoginProps {
   onNavigate: (page: string) => void;
+  onLogin?: (email: string, password: string) => Promise<{ error?: string }>;
 }
 
-export function AdminLogin({ onNavigate }: AdminLoginProps) {
+export function AdminLogin({ onNavigate, onLogin }: AdminLoginProps) {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Default admin credentials
+  const DEFAULT_EMAIL = 'admin@smartbank.com';
+  const DEFAULT_PASSWORD = 'admin123';
+
+  useEffect(() => {
+    // Pre-fill with default credentials for convenience
+    setEmail(DEFAULT_EMAIL);
+    setPassword(DEFAULT_PASSWORD);
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    onNavigate('admin-dashboard');
+    setIsLoading(true);
+
+    try {
+      // If onLogin prop is provided, use it (from App.tsx)
+      if (onLogin) {
+        const result = await onLogin(email, password);
+        if (result.error) {
+          toast.error('Login failed', { 
+            description: result.error,
+            className: 'bg-white text-foreground'
+          });
+        }
+      } else {
+        // Otherwise use auth context directly
+        const result = await login(email, password);
+        if (result.error) {
+          toast.error('Login failed', { 
+            description: result.error,
+            className: 'bg-white text-foreground'
+          });
+        } else {
+          toast.success('Welcome back, Admin!', {
+            description: 'Successfully logged in to the admin dashboard'
+          });
+          onNavigate('admin-dashboard');
+        }
+      }
+    } catch (error) {
+      toast.error('Login failed', { 
+        description: 'An unexpected error occurred. Please ensure the server is running.',
+        className: 'bg-white text-foreground'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -85,8 +134,19 @@ export function AdminLogin({ onNavigate }: AdminLoginProps) {
             </Button>
           </div>
 
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-            Sign In to Admin
+          <Button 
+            type="submit" 
+            className="w-full bg-primary hover:bg-primary/90"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Signing in...
+              </>
+            ) : (
+              'Sign In to Admin'
+            )}
           </Button>
         </form>
 
@@ -113,3 +173,4 @@ export function AdminLogin({ onNavigate }: AdminLoginProps) {
     </div>
   );
 }
+
