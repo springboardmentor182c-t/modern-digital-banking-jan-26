@@ -6,6 +6,7 @@
 # macOS
 # -----------------------------------------------------------------------------
 # Ignore all .DS_Store files everywhere in the project
+.DS_Store
 **/.DS_Store
 **/._.DS_Store
 
