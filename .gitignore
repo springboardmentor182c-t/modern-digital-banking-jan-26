@@ -1,6 +1,58 @@
+# Root .gitignore for NeoVault
+
+# Node.js
 node_modules/
+dist/
+build/
+*.local
+
+# Python
 venv/
-.env
+.venv/
 __pycache__/
-*.log
+*.py[cod]
+*$py.class
+server/src/__pycache__/
+.pytest_cache/
+
+# Databases
+server/*.db
+server/*.db-journal
+server/*.db-shm
+server/*.db-wal
+
+# Environment
+.env
+.env.local
+server/.env
+client/.env.local
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Logs & Diagnostics
+*.log
+*_log.txt
+server_final_log.txt
+client_final_log.txt
+vite_log.txt
+uvicorn_log.txt
+conn_log.txt
+check_out.txt
+users_list.txt
+
+# Temp & Local
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pip-log.txt
+desktop.ini
+*.pdf
+check_conn.py
+server/read_pdf.py

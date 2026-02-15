@@ -1,24 +1,32 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import AdminLogin from "./pages/AdminLogin";
+import { Login, Signup } from "./features/auth";
 
-import Dashboard from "./pages/Dashboard";
-import Accounts from "./pages/Accounts";
-import Transactions from "./pages/Transactions";
-import Budgets from "./pages/Budgets";
-import Bills from "./pages/Bills";
-import Rewards from "./pages/Rewards";
-import Insights from "./pages/Insights";
-import Alerts from "./pages/Alerts";
+
+import { Dashboard } from "./features/dashboard";
+import { Accounts } from "./features/accounts";
+import { Transactions } from "./features/transactions";
+import { Budgets } from "./features/budgets";
+import { Bills } from "./features/bills";
+import { Rewards } from "./features/rewards";
+import { Insights } from "./features/insights";
+import { Alerts } from "./features/alerts";
+
+import { Login as AdminLogin, AdminDashboard, UserManagement, KYCVerification, SystemAlerts, AdminLogs, Reports } from "./features/admin";
 
 import PageContainer from "./layout/PageContainer";
+import AdminPageContainer from "./layout/AdminPageContainer";
 
 const withLayout = (Component) => (
   <PageContainer>
     <Component />
   </PageContainer>
+);
+
+const withAdminLayout = (Component) => (
+  <AdminPageContainer>
+    <Component />
+  </AdminPageContainer>
 );
 
 export default function App() {
@@ -39,6 +47,14 @@ export default function App() {
         <Route path="/rewards" element={withLayout(Rewards)} />
         <Route path="/insights" element={withLayout(Insights)} />
         <Route path="/alerts" element={withLayout(Alerts)} />
+
+        {/* Admin */}
+        <Route path="/admin/dashboard" element={withAdminLayout(AdminDashboard)} />
+        <Route path="/admin/users" element={withAdminLayout(UserManagement)} />
+        <Route path="/admin/kyc" element={withAdminLayout(KYCVerification)} />
+        <Route path="/admin/alerts" element={withAdminLayout(SystemAlerts)} />
+        <Route path="/admin/logs" element={withAdminLayout(AdminLogs)} />
+        <Route path="/admin/reports" element={withAdminLayout(Reports)} />
       </Routes>
     </BrowserRouter>
   );
