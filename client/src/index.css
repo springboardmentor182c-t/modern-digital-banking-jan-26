@@ -1,0 +1,111 @@
+/* ===== RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== BODY ===== */
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: #f4f6f9;
+  color: #111827;
+}
+
+/* ===== APP LAYOUT ===== */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== MAIN CONTENT AREA ===== */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f4f6f9;
+}
+
+/* ===== NAVBAR AREA FIX ===== */
+.main-content > div:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* ===== DASHBOARD AREA ===== */
+.dashboard {
+  padding: 30px;
+  flex: 1;
+}
+
+/* ===== SCROLL FIX ===== */
+html, body {
+  height: 100%;
+}
+
+/* Optional smoother scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Full width card */
+.full-width-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 30px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Table */
+.table-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 30px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.users-table th,
+.users-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.active {
+  color: green;
+  font-weight: 600;
+}
+
+.pending {
+  color: orange;
+  font-weight: 600;
+}
+
+/* Bottom system grid */
+.system-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.system-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.online {
+  color: green;
+  font-weight: bold;
+}
