@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from sqlalchemy import func
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 
 from src.database.core import engine, Base, SessionLocal
@@ -66,7 +66,8 @@ def seed_data():
             category=random.choice(["Food", "Shopping", "Bills"]),
             amount=random.randint(100, 5000),
             txn_type=random.choice([TransactionType.debit, TransactionType.credit]),
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow() - timedelta(days=random.randint(0, 6))
+
         )
         db.add(txn)
 
@@ -74,6 +75,14 @@ def seed_data():
     db.close()
 
     return {"message": "Dummy data inserted"}
+@app.delete("/clear")
+def clear_data():
+    db = SessionLocal()
+    db.query(Transaction).delete()
+    db.query(User).delete()
+    db.commit()
+    db.close()
+    return {"message": "All data cleared"}
 
 
 # ---------------------------------------
@@ -116,4 +125,86 @@ def get_dashboard():
         "total_revenue": float(total_revenue),
         "active_rate": active_rate,
         "recent_users": recent_users_data
+    }
+# --------------------------------
+# Admin Chart Data Endpoint
+# --------------------------------
+@app.get("/admin/chart-data")
+def get_chart_data():
+    db = SessionLocal()
+
+    results = (
+        db.query(
+            func.date(Transaction.created_at).label("date"),
+            func.count(Transaction.id).label("transactions"),
+            func.sum(Transaction.amount).label("revenue")
+        )
+        .group_by(func.date(Transaction.created_at))
+        .order_by(func.date(Transaction.created_at))
+        .all()
+    )
+
+    chart_data = [
+        {
+            "date": str(row.date),
+            "users": row.transactions,
+            "revenue": float(row.revenue or 0)
+        }
+        for row in results
+    ]
+
+    db.close()
+    return chart_data
+# ------------------------------------
+# System Info Endpoint
+# ------------------------------------
+import psutil
+from sqlalchemy import text
+
+@app.get("/admin/system-info")
+def get_system_info():
+    db = SessionLocal()
+
+    # 1️⃣ Check database connection
+    try:
+        db.execute(text("SELECT 1"))
+        database_status = "Online"
+    except:
+        database_status = "Offline"
+
+    # 2️⃣ CPU + Memory usage
+    cpu_usage = psutil.cpu_percent(interval=0.5)
+    memory_usage = psutil.virtual_memory().percent
+    disk_usage = psutil.disk_usage('/').percent
+
+    # 3️⃣ Recent Activity from real transactions
+    recent_transactions = (
+        db.query(Transaction)
+        .order_by(Transaction.created_at.desc())
+        .limit(3)
+        .all()
+    )
+
+    recent_activity = [
+        {
+            "message": f"{txn.description}",
+            "amount": txn.amount,
+            "date": txn.created_at
+        }
+        for txn in recent_transactions
+    ]
+
+    db.close()
+
+    return {
+        "server_status": {
+            "api": "Online",
+            "database": database_status
+        },
+        "performance": {
+            "cpu": cpu_usage,
+            "memory": memory_usage,
+            "storage": disk_usage
+        },
+        "recent_activity": recent_activity
     }
