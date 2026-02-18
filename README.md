@@ -368,7 +368,6 @@ To enable real database storage, configure the `DATABASE_URL` environment variab
 
 ---
 
-
 ## 🔮 Future Improvements
 
 - [ ] Real-time WebSocket updates
@@ -402,3 +401,4 @@ Created as a portfolio project for internship applications.
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Vite](https://vitejs.dev/)
 - [Radix UI](https://www.radix-ui.com/)
+
