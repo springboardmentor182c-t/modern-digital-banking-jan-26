@@ -62,33 +62,96 @@ The Digital Banking Admin Dashboard is a comprehensive administrative interface 
 ```
 modern-digital-banking-jan-26/
 │
-├── client/                    # React Frontend
+├── client/                         # React Frontend
 │   ├── src/
-│   │   ├── app/
-│   │   │   ├── api/         # API service layer
-│   │   │   ├── components/  # Reusable UI components
-│   │   │   ├── context/     # React Context (Auth)
-│   │   │   └── pages/       # Page components
-│   │   ├── styles/          # CSS and Tailwind
-│   │   └── main.tsx         # Entry point
-│   ├── vite.config.ts       # Vite configuration
-│   ├── tsconfig.json        # TypeScript config
-│   └── package.json
+│   │   ├── api/                   # API service layer (adminApi.ts)
+│   │   ├── components/
+│   │   │   ├── AdminHeader.tsx    # Admin header component
+│   │   │   ├── AdminSidebar.tsx   # Admin sidebar component
+│   │   │   ├── figma/             # Figma-related components
+│   │   │   │   └── ImageWithFallback.tsx
+│   │   │   └── ui/                # UI component library (shadcn/ui)
+│   │   │       ├── accordion.tsx
+│   │   │       ├── alert-dialog.tsx
+│   │   │       ├── alert.tsx
+│   │   │       ├── avatar.tsx
+│   │   │       ├── badge.tsx
+│   │   │       ├── button.tsx
+│   │   │       ├── calendar.tsx
+│   │   │       ├── card.tsx
+│   │   │       ├── carousel.tsx
+│   │   │       ├── chart.tsx
+│   │   │       ├── checkbox.tsx
+│   │   │       ├── dialog.tsx
+│   │   │       ├── dropdown-menu.tsx
+│   │   │       ├── input.tsx
+│   │   │       ├── select.tsx
+│   │   │       ├── slider.tsx
+│   │   │       ├── table.tsx
+│   │   │       ├── tabs.tsx
+│   │   │       ├── textarea.tsx
+│   │   │       ├── toggle.tsx
+│   │   │       ├── tooltip.tsx
+│   │   │       └── ... (more UI components)
+│   │   ├── context/
+│   │   │   └── AuthContext.tsx    # Authentication context
+│   │   ├── data/
+│   │   │   └── adminMockData.ts   # Mock data for development
+│   │   ├── pages/
+│   │   │   ├── AdminAlerts.tsx    # Alerts management page
+│   │   │   ├── AdminDashboard.tsx # Dashboard page
+│   │   │   ├── AdminInsights.tsx  # Insights page
+│   │   │   ├── AdminLogin.tsx     # Login page
+│   │   │   ├── AdminLogs.tsx      # Logs page
+│   │   │   ├── AdminSettings.tsx  # Settings page
+│   │   │   └── AdminUsers.tsx     # User management page
+│   │   ├── styles/                # Styles and theming
+│   │   │   ├── fonts.css
+│   │   │   ├── index.css
+│   │   │   ├── tailwind.css
+│   │   │   └── theme.css
+│   │   ├── App.tsx                # Main App component
+│   │   └── main.tsx               # Entry point
+│   ├── guidelines/
+│   │   └── Guidelines.md          # Development guidelines
+│   ├── vite.config.ts             # Vite configuration
+│   ├── tsconfig.json              # TypeScript config
+│   ├── package.json
+│   └── ATTRIBUTIONS.md            # Third-party attributions
 │
-├── server/                   # FastAPI Backend
+├── server/                        # FastAPI Backend
 │   ├── src/
-│   │   ├── api.py           # App initialization
-│   │   ├── main.py          # Entry point
-│   │   ├── auth/            # Authentication module
-│   │   ├── users/           # User management
-│   │   ├── alerts/          # Alert system
-│   │   ├── dashboard/      # Dashboard statistics
-│   │   ├── logs/            # Activity logging
-│   │   ├── settings/        # System settings
-│   │   └── database/        # Database configuration
-│   └── requirements.txt
+│   │   ├── __init__.py
+│   │   ├── api.py                 # API initialization
+│   │   ├── main.py                # Application entry point
+│   │   ├── alerts/                # Alert module
+│   │   │   ├── __init__.py
+│   │   │   ├── controller.py
+│   │   │   ├── models.py
+│   │   │   └── service.py
+│   │   ├── auth/                  # Authentication module
+│   │   │   ├── __init__.py
+│   │   │   └── controller.py
+│   │   ├── dashboard/             # Dashboard module
+│   │   │   ├── controller.py
+│   │   │   └── service.py
+│   │   ├── database/              # Database configuration
+│   │   │   ├── __init__.py
+│   │   │   └── core.py
+│   │   ├── settings/              # Settings module
+│   │   │   ├── __init__.py
+│   │   │   ├── controller.py
+│   │   │   ├── models.py
+│   │   │   └── service.py
+│   │   └── users/                 # User management module
+│   │       ├── __init__.py
+│   │       ├── controller.py
+│   │       ├── models.py
+│   │       └── service.py
+│   ├── requirements.txt           # Python dependencies
+│   └── venv-new/                  # Virtual environment
 │
-├── admin/                    # Legacy location (backup)
+├── LICENSE
 └── README.md
 ```
 
