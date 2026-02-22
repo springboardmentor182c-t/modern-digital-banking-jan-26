@@ -73,3 +73,19 @@ class Transaction(Base):
     amount = Column(Numeric(14, 2))
     status = Column(String)  # 'completed' or 'pending'
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# Accounts model
+class Account(Base):
+    __tablename__ = "accounts"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    bank_name = Column(String, nullable=False)
+    account_name = Column(String, nullable=False)
+    account_number = Column(String, nullable=False)  # Masked as ****1234
+    account_type = Column(String, nullable=False)  # Savings, Checking, Credit Card, Investment
+    currency = Column(String, default="INR")
+    balance = Column(Numeric(14, 2), default=0.0)
+    status = Column(String, default="Active")  # Active / Inactive
+    created_at = Column(DateTime, default=datetime.utcnow)

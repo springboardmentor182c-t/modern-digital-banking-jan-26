@@ -69,3 +69,34 @@ class AddressUploadSchema(BaseModel):
     city: str
     state: str
     zip_code: str
+
+
+# Account Schemas
+class AccountCreateSchema(BaseModel):
+    bank_name: str
+    account_type: str  # Checking, Savings, Credit, Investment
+    account_number: str
+    currency: str = "INR"
+    initial_balance: float = 0.0
+
+
+class AccountUpdateSchema(BaseModel):
+    bank_name: Optional[str] = None
+    account_type: Optional[str] = None
+    currency: Optional[str] = None
+    balance: Optional[float] = None
+    status: Optional[str] = None
+
+
+class AccountResponseSchema(BaseModel):
+    id: int
+    bank_name: str
+    account_name: str
+    account_number: str
+    account_type: str
+    currency: str
+    balance: float
+    status: str
+
+    class Config:
+        from_attributes = True

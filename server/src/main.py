@@ -25,6 +25,10 @@ app.include_router(kyc_router, prefix="/kyc")
 from src.users.transactions import router as transactions_router
 app.include_router(transactions_router, prefix="/api/transactions")
 
+# Accounts API
+from src.accounts.controller import router as accounts_router
+app.include_router(accounts_router, prefix="/api/accounts")
+
 # Public endpoint to fetch all transactions (for frontend / direct calls)
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -58,14 +62,7 @@ def get_transactions(db: Session = Depends(get_db)):
         })
     return result
 
-from fastapi.middleware.cors import CORSMiddleware
+
 
 # ... after initializing your app = FastAPI() ...
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # For development, allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)

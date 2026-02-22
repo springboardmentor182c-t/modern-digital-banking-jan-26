@@ -71,7 +71,7 @@ from src.models.user import User
 security = HTTPBearer()
 
 
-async def get_current_user_from_token(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db), x_user_id: str = Header(None)):
+async def get_current_user_from_token(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)), db: Session = Depends(get_db), x_user_id: str = Header(None)):
     """Decode bearer token and return the authenticated user (raises 401 on errors).
 
     Fallback: if no bearer token provided (or invalid), accept `X-User-Id` header as a convenience
