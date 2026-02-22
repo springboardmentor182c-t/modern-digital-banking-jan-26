@@ -1,5 +1,5 @@
-"""Users package initializer."""
+# Users module
+# Transactions router is exported from transactions.py
+from src.users.transactions import router as transactions_router
 
-from . import models
-
-__all__ = ["models"]
+__all__ = ["transactions_router"]

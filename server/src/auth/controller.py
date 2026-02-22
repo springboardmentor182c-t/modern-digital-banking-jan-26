@@ -1,144 +1,230 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import random, hashlib
 from datetime import datetime, timedelta
-from typing import Optional
-import os
-from jose import JWTError, jwt
-import bcrypt
-from ..database.core import SessionLocal
 
-# Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from src.database.core import SessionLocal
+from src.models.user import User, OTP, PasswordResetOTP, Admin
+from src.schemas import RegisterSchema, OTPSchema, LoginSchema, ForgotPasswordSchema, VerifyResetOTPSchema, ResetPasswordSchema, AdminLoginSchema
+from src.auth.service import get_db, hash_password, generate_otp, hash_password_bcrypt, verify_password_bcrypt, create_access_token, get_current_user_from_token, ACCESS_TOKEN_EXPIRE_MINUTES
 
-# Password hashing
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/admin/auth/token")
+router = APIRouter()
 
-# Pydantic Models
-class Token(BaseModel):
-    access_token: str
-    token_type: str
 
-class TokenData(BaseModel):
-    email: Optional[str] = None
+# PAGE 1 — PERSONAL INFO
+@router.post("/register")
+def register_user(data: RegisterSchema, db: Session = Depends(get_db)):
+    if not data.terms_accepted:
+        raise HTTPException(400, "Terms must be accepted")
 
-class AdminLogin(BaseModel):
-    email: EmailStr
-    password: str
+    hashed_password = hashlib.sha256(data.password.encode()).hexdigest()
 
-class AdminResponse(BaseModel):
-    id: int
-    email: str
-    name: str
-    created_at: Optional[datetime] = None
-
-# Database dependency
-def get_db():
-    try:
-        db = SessionLocal()
-        yield db
-    except Exception:
-        # Return None if database is not available
-        yield None
-    finally:
-        if db is not None:
-            db.close()
-
-# Password utilities
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(
-        plain_password.encode('utf-8'), 
-        hashed_password.encode('utf-8')
+    user = User(
+        first_name=data.first_name,
+        last_name=data.last_name,
+        email=data.email,
+        phone=data.phone,
+        password=hashed_password
     )
 
-def get_password_hash(password: str) -> str:
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    db.add(user)
+    db.commit()
+    db.refresh(user)
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    otp_code = str(random.randint(100000, 999999))
+    otp = OTP(user_id=user.id, otp=otp_code)
+    db.add(otp)
+    db.commit()
 
-# Mock admin for demo (in production, use database)
-# Password: admin123
-ADMIN_HASH = "$2b$12$2mU4GMsCrJTQMVBIahJMu.xN08qizi5qjWR2FdlCdRoHbMjS05yRa"  # admin123
+    return {
+        "message": "User created",
+        "user_id": user.id,
+        "otp_for_testing": otp_code
+    }
 
-def authenticate_admin(email: str, password: str):
-    # For demo, accept admin@smartbank.com with password admin123
-    if email == "admin@smartbank.com" and verify_password(password, ADMIN_HASH):
-        return {
-            "id": 1,
-            "email": "admin@smartbank.com",
-            "name": "Admin User"
+
+# PAGE 2 — OTP VERIFY
+@router.post("/verify-otp")
+def verify_otp(data: OTPSchema, db: Session = Depends(get_db)):
+    otp = db.query(OTP).filter_by(user_id=data.user_id, otp=data.otp).first()
+
+    if not otp:
+        raise HTTPException(400, "Invalid OTP")
+
+    user = db.query(User).filter_by(id=data.user_id).first()
+    user.is_verified = True
+
+    db.delete(otp)
+    db.commit()
+
+    return {"message": "OTP verified successfully"}
+
+
+# PAGE 3 — LOGIN
+@router.post("/login")
+def login_user(data: LoginSchema, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(email=data.email).first()
+
+    if not user:
+        raise HTTPException(401, "Invalid credentials")
+
+    hashed_password = hashlib.sha256(data.password.encode()).hexdigest()
+
+    if user.password != hashed_password:
+        raise HTTPException(401, "Invalid credentials")
+
+    if not user.is_verified:
+        raise HTTPException(403, "Account not verified")
+
+    # Create JWT access token
+    access_token = create_access_token(subject=user.id, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+
+    return {
+        "message": "Login successful",
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_id": user.id
+    }
+
+
+# FORGOT PASSWORD - Step 1: Request Password Reset
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordSchema, db: Session = Depends(get_db)):
+    # Check if user exists
+    user = db.query(User).filter_by(email=data.email).first()
+
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    # Generate OTP
+    otp_code = generate_otp()
+
+    # Set expiry to 5 minutes from now
+    expires_at = datetime.utcnow() + timedelta(minutes=5)
+
+    # Delete any existing unused reset OTPs for this user
+    db.query(PasswordResetOTP).filter_by(user_id=user.id, is_used=False).delete()
+    db.commit()
+
+    # Create new password reset OTP
+    reset_otp = PasswordResetOTP(
+        user_id=user.id,
+        otp=otp_code,
+        expires_at=expires_at,
+        is_used=False
+    )
+
+    db.add(reset_otp)
+    db.commit()
+
+    return {
+        "message": "OTP sent successfully",
+        "expires_in": "5 minutes"
+    }
+
+
+# FORGOT PASSWORD - Step 2: Verify Reset OTP
+@router.post("/verify-reset-otp")
+def verify_reset_otp(data: VerifyResetOTPSchema, db: Session = Depends(get_db)):
+    # Find user by email
+    user = db.query(User).filter_by(email=data.email).first()
+
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    # Find matching OTP
+    reset_otp = db.query(PasswordResetOTP).filter_by(
+        user_id=user.id,
+        otp=data.otp,
+        is_used=False
+    ).first()
+
+    if not reset_otp:
+        raise HTTPException(400, "Invalid OTP")
+
+    # Check if OTP has expired
+    if datetime.utcnow() > reset_otp.expires_at:
+        raise HTTPException(400, "OTP has expired")
+
+    # Mark OTP as used
+    reset_otp.is_used = True
+    db.commit()
+
+    return {"message": "OTP verified successfully"}
+
+
+# FORGOT PASSWORD - Step 3: Reset Password
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordSchema, db: Session = Depends(get_db)):
+    # Find user by email
+    user = db.query(User).filter_by(email=data.email).first()
+
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    # Check if there's a recently verified (used) OTP for this user
+    recent_used_otp = db.query(PasswordResetOTP).filter_by(
+        user_id=user.id,
+        is_used=True
+    ).order_by(PasswordResetOTP.id.desc()).first()
+
+    if not recent_used_otp:
+        raise HTTPException(400, "Password reset not initiated. Please use forgot-password first.")
+
+    # Check if OTP was recently used (within 10 minutes)
+    if datetime.utcnow() - timedelta(minutes=10) > recent_used_otp.expires_at:
+        raise HTTPException(400, "Password reset session expired. Please start again.")
+
+    # Hash and update password
+    hashed_password = hash_password(data.new_password)
+    user.password = hashed_password
+
+    # Clean up used OTPs for this user
+    db.query(PasswordResetOTP).filter_by(user_id=user.id).delete()
+    db.commit()
+
+    return {"message": "Password reset successfully"}
+
+
+# ADMIN LOGIN
+@router.post("/admin/login")
+def admin_login(data: AdminLoginSchema, db: Session = Depends(get_db)):
+    """
+    Admin login endpoint with bcrypt password verification
+
+    Args:
+        data: AdminLoginSchema with email and password
+        db: Database session
+
+    Returns:
+        {
+            "message": "Login successful",
+            "admin_id": "<uuid>",
+            "role": "ADMIN"
         }
-    return None
 
-async def get_current_admin(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        token_data = TokenData(email=email)
-    except JWTError:
-        raise credentials_exception
-    
-    # For demo, return mock admin
-    if email == "admin@smartbank.com":
-        return {
-            "id": 1,
-            "email": email,
-            "name": "Admin User"
-        }
-    raise credentials_exception
+    Raises:
+        HTTPException(401): Invalid credentials
+        HTTPException(403): Admin account is inactive
+        HTTPException(404): Admin not found
+    """
+    # Step 1: Check if admin exists by email
+    admin = db.query(Admin).filter_by(email=data.email).first()
 
-# Auth router
-router = APIRouter(prefix="/admin/auth", tags=["Authentication"])
-
-@router.post("/token", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    admin = authenticate_admin(form_data.username, form_data.password)
     if not admin:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": admin["email"]}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+        raise HTTPException(401, "Invalid credentials")
 
-@router.post("/login", response_model=AdminResponse)
-async def login(admin_login: AdminLogin):
-    admin = authenticate_admin(admin_login.email, admin_login.password)
-    if not admin:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
-        )
-    return AdminResponse(**admin)
+    # Step 2: Verify password using bcrypt
+    if not verify_password_bcrypt(data.password, admin.password_hash):
+        raise HTTPException(401, "Invalid credentials")
 
-@router.get("/me", response_model=AdminResponse)
-async def get_me(current_admin: dict = Depends(get_current_admin)):
-    return current_admin
+    # Step 3: Check if admin account is active
+    if not admin.is_active:
+        raise HTTPException(403, "Admin account is inactive")
 
-@router.post("/logout")
-async def logout():
-    return {"message": "Successfully logged out"}
-
+    # Step 4: Return successful login response
+    return {
+        "message": "Login successful",
+        "admin_id": admin.id,
+        "role": admin.role
+    }
