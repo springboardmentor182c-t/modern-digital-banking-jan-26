@@ -3,16 +3,6 @@ from src.database.core import engine, Base
 from src.auth.controller import router as auth_router
 from src.auth.kyc import router as kyc_router
 
-# Import admin routers
-from src.users.controller import router as users_router
-from src.alerts.controller import router as alerts_router
-from src.logs.controller import router as logs_router
-from src.settings.controller import router as settings_router
-from src.dashboard.controller import router as dashboard_router
-
-# Import accounts router
-from src.accounts.controller import router as accounts_router
-
 Base.metadata.create_all(bind=engine)
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -20,25 +10,16 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For development, allows all origins
+    allow_origins=["http://localhost:5173"],  # Allow only the frontend origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Auth routes
+
+
 app.include_router(auth_router, prefix="/auth")
 app.include_router(kyc_router, prefix="/kyc")
-
-# Admin routes
-app.include_router(users_router)
-app.include_router(alerts_router)
-app.include_router(logs_router)
-app.include_router(settings_router)
-app.include_router(dashboard_router)
-
-# Accounts routes
-app.include_router(accounts_router, prefix="/api/accounts")
 
 # Transactions API (uses header based auth for now - send `Authorization: Bearer <user_id>` or `X-User-Id`)
 from src.users.transactions import router as transactions_router
@@ -77,18 +58,14 @@ def get_transactions(db: Session = Depends(get_db)):
         })
     return result
 
+from fastapi.middleware.cors import CORSMiddleware
 
-# Health check endpoint
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "message": "Digital Banking API is running"}
+# ... after initializing your app = FastAPI() ...
 
-
-@app.get("/")
-async def root():
-    return {
-        "name": "Digital Banking API",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "health": "/health"
-    }
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # For development, allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

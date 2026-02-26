@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Card } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { 
@@ -10,110 +9,18 @@ import {
   TrendingDown,
   Activity
 } from 'lucide-react';
-import { dashboardApi } from '@/api/adminApi';
+import { 
+  adminStats, 
+  alertTrendData, 
+  userGrowthData,
+  alertTypeDistribution,
+  topAlertCategories,
+  systemAlerts
+} from '@/app/data/adminMockData';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { toast } from 'sonner';
-
-// Types matching the API response
-interface DashboardStats {
-  total_users: number;
-  active_users: number;
-  linked_accounts: number;
-  alerts_triggered: number;
-  growth_rate: {
-    users: number;
-    accounts: number;
-    alerts: number;
-  };
-}
-
-interface AlertTrendData {
-  month: string;
-  low_balance: number;
-  bill_due: number;
-  budget_exceeded: number;
-}
-
-interface UserGrowthData {
-  month: string;
-  users: number;
-}
-
-interface AlertDistribution {
-  name: string;
-  value: number;
-  fill: string;
-}
-
-interface TopCategory {
-  category: string;
-  count: number;
-  trend: string;
-}
-
-interface RecentAlert {
-  id: number;
-  user_name: string;
-  type: string;
-  message: string;
-  severity: string;
-  status: string;
-  timestamp: string;
-}
 
 export function AdminDashboard() {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [userGrowthData, setUserGrowthData] = useState<UserGrowthData[]>([]);
-  const [alertTrendData, setAlertTrendData] = useState<AlertTrendData[]>([]);
-  const [alertTypeDistribution, setAlertTypeDistribution] = useState<AlertDistribution[]>([]);
-  const [topAlertCategories, setTopAlertCategories] = useState<TopCategory[]>([]);
-  const [recentAlerts, setRecentAlerts] = useState<RecentAlert[]>([]);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    setLoading(true);
-    try {
-      const result = await dashboardApi.getStats();
-      if (result.error) {
-        toast.error('Failed to load dashboard data');
-      } else if (result.data) {
-        setStats(result.data.stats);
-        setUserGrowthData(result.data.user_growth || []);
-        setAlertTrendData(result.data.alert_trends || []);
-        setAlertTypeDistribution(result.data.alert_distribution || []);
-        setTopAlertCategories(result.data.top_categories || []);
-        setRecentAlerts(result.data.recent_alerts || []);
-      }
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Helper function to get growth rate display
-  const getGrowthText = (value: number) => {
-    if (value >= 0) {
-      return `+${value}% this month`;
-    }
-    return `${value}% vs last month`;
-  };
-
-  // Default stats for loading state
-  const defaultStats = {
-    total_users: 0,
-    active_users: 0,
-    linked_accounts: 0,
-    alerts_triggered: 0,
-    growth_rate: { users: 0, accounts: 0, alerts: 0 }
-  };
-
-  const currentStats = stats || defaultStats;
+  const recentAlerts = systemAlerts.slice(0, 4);
 
   const StatCard = ({ 
     title, 
@@ -162,33 +69,33 @@ export function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Users"
-          value={currentStats.total_users}
-          change={getGrowthText(currentStats.growth_rate.users)}
-          changeType={currentStats.growth_rate.users >= 0 ? 'positive' : 'negative'}
+          value={adminStats.totalUsers}
+          change={`+${adminStats.growthRate.users}% this month`}
+          changeType="positive"
           icon={Users}
           iconColor="bg-primary"
         />
         <StatCard
           title="Active Users"
-          value={currentStats.active_users}
-          change={currentStats.total_users > 0 ? `${Math.round((currentStats.active_users / currentStats.total_users) * 100)}% active rate` : 'N/A'}
+          value={adminStats.activeUsers}
+          change={`${Math.round((adminStats.activeUsers / adminStats.totalUsers) * 100)}% active rate`}
           changeType="positive"
           icon={UserCheck}
           iconColor="bg-success"
         />
         <StatCard
           title="Linked Accounts"
-          value={currentStats.linked_accounts}
-          change={getGrowthText(currentStats.growth_rate.accounts)}
-          changeType={currentStats.growth_rate.accounts >= 0 ? 'positive' : 'negative'}
+          value={adminStats.linkedAccounts}
+          change={`+${adminStats.growthRate.accounts}% this month`}
+          changeType="positive"
           icon={Wallet}
           iconColor="bg-secondary"
         />
         <StatCard
           title="Alerts Triggered"
-          value={currentStats.alerts_triggered}
-          change={getGrowthText(currentStats.growth_rate.alerts)}
-          changeType={currentStats.growth_rate.alerts >= 0 ? 'positive' : 'negative'}
+          value={adminStats.alertsTriggered}
+          change={`${adminStats.growthRate.alerts}% vs last month`}
+          changeType="positive"
           icon={AlertCircle}
           iconColor="bg-warning"
         />
@@ -301,44 +208,38 @@ export function AdminDashboard() {
       <Card className="p-6 shadow-md border-border">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold">Recent System Alerts</h3>
-          <Badge variant="secondary">{recentAlerts.length} total</Badge>
+          <Badge variant="secondary">{systemAlerts.length} total</Badge>
         </div>
-        {loading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading alerts...</div>
-        ) : recentAlerts.length > 0 ? (
-          <div className="space-y-3">
-            {recentAlerts.map((alert) => {
-              const severityColors: Record<string, string> = {
-                low: 'bg-info/20 text-info-foreground border-info/30',
-                medium: 'bg-warning/20 text-warning-foreground border-warning/30',
-                high: 'bg-destructive/20 text-destructive-foreground border-destructive/30'
-              };
+        <div className="space-y-3">
+          {recentAlerts.map((alert) => {
+            const severityColors = {
+              low: 'bg-info/20 text-info-foreground border-info/30',
+              medium: 'bg-warning/20 text-warning-foreground border-warning/30',
+              high: 'bg-destructive/20 text-destructive-foreground border-destructive/30'
+            };
 
-              return (
-                <div 
-                  key={alert.id} 
-                  className="flex items-start justify-between p-4 bg-accent/30 rounded-lg border border-border hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-sm">{alert.user_name}</p>
-                      <Badge className={`text-xs ${severityColors[alert.severity] || ''} border`}>
-                        {alert.severity}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{alert.message}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{alert.timestamp}</p>
+            return (
+              <div 
+                key={alert.id} 
+                className="flex items-start justify-between p-4 bg-accent/30 rounded-lg border border-border hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-medium text-sm">{alert.userName}</p>
+                    <Badge className={`text-xs ${severityColors[alert.severity]} border`}>
+                      {alert.severity}
+                    </Badge>
                   </div>
-                  <Badge variant={alert.status === 'unread' ? 'default' : 'secondary'} className="text-xs">
-                    {alert.status}
-                  </Badge>
+                  <p className="text-sm text-muted-foreground">{alert.message}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{alert.timestamp}</p>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">No recent alerts</div>
-        )}
+                <Badge variant={alert.status === 'unread' ? 'default' : 'secondary'} className="text-xs">
+                  {alert.status}
+                </Badge>
+              </div>
+            );
+          })}
+        </div>
       </Card>
 
       {/* System Health Indicators */}

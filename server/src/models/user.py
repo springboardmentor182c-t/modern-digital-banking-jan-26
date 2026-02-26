@@ -13,7 +13,6 @@ class User(Base):
     phone = Column(String)
     password = Column(String)
     is_verified = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
 
 class OTP(Base):
     __tablename__ = "otps"

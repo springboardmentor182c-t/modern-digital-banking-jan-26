@@ -505,6 +505,7 @@ export function Accounts() {
             return (
               <AccountCard 
                 key={account.id} 
+                id={account.id}
                 type={account.account_type}
                 accountNumber={account.account_number}
                 balance={account.balance}

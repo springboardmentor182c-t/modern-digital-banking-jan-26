@@ -4,7 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = "postgresql://postgres:root@localhost:5432/digital_banking_db"
+DATABASE_URL = "postgresql://bank_user:bankpass123@localhost:5432/banking_admin"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -20,20 +20,3 @@ try:
 except Exception as e:
     logger.warning(f"Database connection failed: {e}")
     DB_AVAILABLE = False
-
-
-def is_database_available() -> bool:
-    """
-    Dynamically check if database is available.
-    This function can be called to verify database connectivity at runtime.
-    """
-    global DB_AVAILABLE
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        DB_AVAILABLE = True
-        return True
-    except Exception as e:
-        logger.warning(f"Database connection check failed: {e}")
-        DB_AVAILABLE = False
-        return False

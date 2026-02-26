@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
-from ..database.core import DB_AVAILABLE, SessionLocal, is_database_available
+from ..database.core import DB_AVAILABLE, SessionLocal
 
 # Mock data for demo when database is unavailable
 MOCK_USERS = [
@@ -43,16 +43,6 @@ class UserStatsResponse(BaseModel):
 
 router = APIRouter(prefix="/admin/users", tags=["Users"])
 
-
-def get_account_count(db: Session, user_id: int) -> int:
-    """Get the number of accounts for a user"""
-    try:
-        from src.models.user import Account
-        return db.query(Account).filter(Account.user_id == user_id).count()
-    except Exception:
-        return 0
-
-
 @router.get("/", response_model=UsersListResponse)
 async def list_users(
     page: int = Query(1, ge=1),
@@ -62,8 +52,8 @@ async def list_users(
     """
     Get paginated list of users with optional status filter
     """
-    # Dynamically check if database is available
-    if not is_database_available():
+    # Use mock data if database is unavailable
+    if not DB_AVAILABLE:
         users = MOCK_USERS.copy()
         
         # Apply status filter
@@ -85,7 +75,6 @@ async def list_users(
     db = SessionLocal()
     try:
         from .service import get_users
-        from .models import User
         
         skip = (page - 1) * page_size
         users = get_users(db, skip=skip, limit=page_size)
@@ -93,16 +82,13 @@ async def list_users(
         # Format users for response
         user_responses = []
         for user in users:
-            # Get account count from Account table
-            account_count = get_account_count(db, user.id)
-            
             user_responses.append({
                 "id": user.id,
                 "name": user.name or "Unknown",
                 "email": user.email,
                 "status": user.status or "active",
                 "kyc_status": user.kyc_status or "unverified",
-                "account_count": account_count,
+                "account_count": 0,
                 "joined_date": user.created_at.strftime("%Y-%m-%d") if user.created_at else None,
                 "last_active": None
             })
@@ -123,8 +109,8 @@ async def get_user_stats():
     """
     Get user statistics
     """
-    # Dynamically check if database is available
-    if not is_database_available():
+    # Use mock stats if database is unavailable
+    if not DB_AVAILABLE:
         return {
             "total": len(MOCK_USERS),
             "active": 3,
@@ -146,7 +132,7 @@ async def get_user(user_id: int):
     """
     Get user by ID
     """
-    if not is_database_available():
+    if not DB_AVAILABLE:
         # Find user in mock data
         user = next((u for u in MOCK_USERS if u["id"] == user_id), None)
         if not user:
@@ -161,16 +147,13 @@ async def get_user(user_id: int):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # Get account count
-        account_count = get_account_count(db, user_id)
-        
         return {
             "id": user.id,
             "name": user.name or "Unknown",
             "email": user.email,
             "status": user.status or "active",
             "kyc_status": user.kyc_status or "unverified",
-            "account_count": account_count,
+            "account_count": 0,
             "joined_date": user.created_at.strftime("%Y-%m-%d") if user.created_at else None,
             "last_active": None
         }
@@ -189,7 +172,7 @@ async def update_user_status(user_id: int, status_update: UserStatusUpdate):
             detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
         )
     
-    if not is_database_available():
+    if not DB_AVAILABLE:
         # Update mock data
         user = next((u for u in MOCK_USERS if u["id"] == user_id), None)
         if not user:
@@ -207,4 +190,7 @@ async def update_user_status(user_id: int, status_update: UserStatusUpdate):
         return {"message": "User status updated successfully", "user_id": user_id, "status": status_update.status}
     finally:
         db.close()
+
+# Import User model for queries
+from .models import User
 
