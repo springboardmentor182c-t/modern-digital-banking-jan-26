@@ -54,7 +54,7 @@ export function Transactions({ onNavigate }: TransactionsProps = {}) {
     setError(null);
     try {
       const headers = getAuthHeaders();
-      const res = await fetch('http://127.0.0.1:8080/transactions', {
+      const res = await fetch('/api/transactions/', {
         headers: headers
       });
 

@@ -77,7 +77,7 @@ export function OTPVerification({ email, onVerified, onBack }: OTPVerificationPr
     setErrorMessage('');
 
     try {
-      const response = await fetch('http://127.0.0.1:8080/auth/verify-reset-otp', {
+      const response = await fetch('http://127.0.0.1:8000/auth/verify-reset-otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -114,7 +114,7 @@ export function OTPVerification({ email, onVerified, onBack }: OTPVerificationPr
     if (countdown > 0) return;
 
     try {
-      const response = await fetch('http://127.0.0.1:8080/auth/forgot-password', {
+      const response = await fetch('http://127.0.0.1:8000/auth/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

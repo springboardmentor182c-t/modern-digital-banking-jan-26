@@ -1,8 +1,10 @@
 from fastapi import APIRouter
 from sqlalchemy.orm import Session
+from sqlalchemy import func, extract
 from typing import List
 from pydantic import BaseModel
-from ..database.core import DB_AVAILABLE, SessionLocal
+from datetime import datetime, timedelta
+from ..database.core import DB_AVAILABLE, SessionLocal, is_database_available
 
 # Mock data for demo when database is unavailable
 MOCK_STATS = {
@@ -93,60 +95,249 @@ class DashboardResponse(BaseModel):
 
 router = APIRouter(prefix="/admin/dashboard", tags=["Dashboard"])
 
+
+def get_user_growth_data(db: Session, months: int = 6) -> List[dict]:
+    """Get user growth data for the last N months"""
+    from src.models.user import User
+    
+    result = []
+    now = datetime.now()
+    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    
+    for i in range(months - 1, -1, -1):
+        # Calculate the target month
+        target_date = now - timedelta(days=30 * i)
+        month = target_date.month
+        year = target_date.year
+        
+        # Count users created up to that month
+        count = db.query(User).filter(
+            extract('year', User.created_at) <= year,
+            extract('month', User.created_at) <= month
+        ).count() if User.created_at else 0
+        
+        # Also try with is_verified as proxy for created_at if available
+        if count == 0:
+            count = db.query(User).count()
+        
+        result.append({
+            "month": month_names[month - 1],
+            "users": count
+        })
+    
+    return result
+
+
+def get_alert_trends_data(db: Session, months: int = 6) -> List[dict]:
+    """Get alert trends by type for the last N months"""
+    from src.alerts.models import Alert
+    
+    result = []
+    now = datetime.now()
+    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    
+    for i in range(months - 1, -1, -1):
+        target_date = now - timedelta(days=30 * i)
+        month = target_date.month
+        year = target_date.year
+        
+        # Count alerts by type for this month
+        low_balance = db.query(Alert).filter(
+            Alert.type == "LOW_BALANCE",
+            extract('year', Alert.created_at) == year,
+            extract('month', Alert.created_at) == month
+        ).count() if Alert.created_at else 0
+        
+        bill_due = db.query(Alert).filter(
+            Alert.type == "BILL_DUE",
+            extract('year', Alert.created_at) == year,
+            extract('month', Alert.created_at) == month
+        ).count() if Alert.created_at else 0
+        
+        budget_exceeded = db.query(Alert).filter(
+            Alert.type == "BUDGET_EXCEEDED",
+            extract('year', Alert.created_at) == year,
+            extract('month', Alert.created_at) == month
+        ).count() if Alert.created_at else 0
+        
+        result.append({
+            "month": month_names[month - 1],
+            "low_balance": low_balance,
+            "bill_due": bill_due,
+            "budget_exceeded": budget_exceeded
+        })
+    
+    return result
+
+
+def get_alert_distribution_data(db: Session) -> List[dict]:
+    """Get alert distribution by type"""
+    from src.alerts.models import Alert
+    
+    low_balance = db.query(Alert).filter(Alert.type == "LOW_BALANCE").count()
+    bill_due = db.query(Alert).filter(Alert.type == "BILL_DUE").count()
+    budget_exceeded = db.query(Alert).filter(Alert.type == "BUDGET_EXCEEDED").count()
+    
+    return [
+        {"name": "Low Balance", "value": low_balance, "fill": "#ef4444"},
+        {"name": "Bill Due", "value": bill_due, "fill": "#f97316"},
+        {"name": "Budget Exceeded", "value": budget_exceeded, "fill": "#eab308"}
+    ]
+
+
+def get_recent_alerts(db: Session, limit: int = 10) -> List[dict]:
+    """Get recent alerts from database"""
+    from src.alerts.models import Alert
+    
+    alerts = db.query(Alert).order_by(Alert.created_at.desc()).limit(limit).all()
+    
+    result = []
+    for alert in alerts:
+        result.append({
+            "id": alert.id,
+            "user_name": alert.user_name or "Unknown",
+            "type": alert.type or "unknown",
+            "message": alert.message or "",
+            "severity": alert.severity or "low",
+            "status": alert.status or "unread",
+            "timestamp": alert.created_at.strftime("%Y-%m-%d %H:%M") if alert.created_at else ""
+        })
+    
+    return result
+
+
+def calculate_growth_rate(db: Session) -> dict:
+    """Calculate growth rates for users, accounts, and alerts"""
+    from src.models.user import User
+    from src.models.user import Account
+    from src.alerts.models import Alert
+    
+    now = datetime.now()
+    last_month = now - timedelta(days=30)
+    two_months_ago = now - timedelta(days=60)
+    
+    # User growth
+    users_this_month = db.query(User).filter(User.created_at >= last_month).count() if User.created_at else 0
+    users_last_month = db.query(User).filter(
+        User.created_at >= two_months_ago,
+        User.created_at < last_month
+    ).count() if User.created_at else 0
+    
+    if users_last_month > 0:
+        users_growth = round(((users_this_month - users_last_month) / users_last_month) * 100, 1)
+    else:
+        users_growth = 100 if users_this_month > 0 else 0
+    
+    # Account growth
+    accounts_this_month = db.query(Account).filter(Account.created_at >= last_month).count() if Account.created_at else 0
+    accounts_last_month = db.query(Account).filter(
+        Account.created_at >= two_months_ago,
+        Account.created_at < last_month
+    ).count() if Account.created_at else 0
+    
+    if accounts_last_month > 0:
+        accounts_growth = round(((accounts_this_month - accounts_last_month) / accounts_last_month) * 100, 1)
+    else:
+        accounts_growth = 100 if accounts_this_month > 0 else 0
+    
+    # Alert growth
+    alerts_this_month = db.query(Alert).filter(Alert.created_at >= last_month).count() if Alert.created_at else 0
+    alerts_last_month = db.query(Alert).filter(
+        Alert.created_at >= two_months_ago,
+        Alert.created_at < last_month
+    ).count() if Alert.created_at else 0
+    
+    if alerts_last_month > 0:
+        alerts_growth = round(((alerts_this_month - alerts_last_month) / alerts_last_month) * 100, 1)
+    else:
+        alerts_growth = 100 if alerts_this_month > 0 else 0
+    
+    return {
+        "users": users_growth,
+        "accounts": accounts_growth,
+        "alerts": alerts_growth
+    }
+
+
 @router.get("/stats", response_model=DashboardResponse)
 async def get_dashboard_stats():
     """
-    Get comprehensive dashboard statistics
+    Get comprehensive dashboard statistics from the database
     """
-    # Use mock data if database is unavailable
-    if not DB_AVAILABLE:
-        return {
-            "stats": MOCK_STATS,
-            "user_growth": MOCK_USER_GROWTH,
-            "alert_trends": MOCK_ALERT_TRENDS,
-            "alert_distribution": MOCK_ALERT_DISTRIBUTION,
-            "top_categories": MOCK_TOP_CATEGORIES,
-            "recent_alerts": MOCK_RECENT_ALERTS
-        }
-    
-    # In production, these would come from actual database queries
-    # For now, return structured data matching frontend expectations
-    
-    stats = {
-        "total_users": 0,
-        "active_users": 0,
-        "linked_accounts": 0,
-        "alerts_triggered": 0,
-        "growth_rate": {
-            "users": 0,
-            "accounts": 0,
-            "alerts": 0
-        }
-    }
-    
+    # Always try to use the database - skip mock data entirely
     db = SessionLocal()
     try:
-        # Try to get real data from database if available
-        try:
-            from ..users.models import User
-            from ..alerts.models import Alert
-            
-            stats["total_users"] = db.query(User).count()
-            stats["active_users"] = db.query(User).filter(User.status == "active").count()
-            stats["alerts_triggered"] = db.query(Alert).count()
-        except Exception:
-            pass
+        # Import models from src/models/user.py (has proper User and Account models)
+        from src.models.user import User, Account
+        from src.alerts.models import Alert
+        
+        # Get total and active users
+        total_users = db.query(User).count()
+        active_users = db.query(User).filter(User.is_verified == True).count()
+        
+        # Get linked accounts count
+        linked_accounts = db.query(Account).filter(Account.status == "Active").count()
+        
+        # Get total alerts
+        alerts_triggered = db.query(Alert).count()
+        
+        # Calculate growth rates
+        growth_rate = calculate_growth_rate(db)
+        
+        stats = {
+            "total_users": total_users,
+            "active_users": active_users,
+            "linked_accounts": linked_accounts,
+            "alerts_triggered": alerts_triggered,
+            "growth_rate": growth_rate
+        }
+        
+        # Get user growth data
+        user_growth = get_user_growth_data(db)
+        
+        # Get alert trends
+        alert_trends = get_alert_trends_data(db)
+        
+        # Get alert distribution
+        alert_distribution = get_alert_distribution_data(db)
+        
+        # Get recent alerts
+        recent_alerts = get_recent_alerts(db)
+        
+        # Top categories (placeholder - would need transaction data)
+        top_categories = MOCK_TOP_CATEGORIES
+        
+        return {
+            "stats": stats,
+            "user_growth": user_growth,
+            "alert_trends": alert_trends,
+            "alert_distribution": alert_distribution,
+            "top_categories": top_categories,
+            "recent_alerts": recent_alerts
+        }
+    except Exception as e:
+        # Log error and return empty data instead of mock data
+        import logging
+        logging.getLogger(__name__).error(f"Error fetching dashboard stats: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "stats": {
+                "total_users": 0,
+                "active_users": 0,
+                "linked_accounts": 0,
+                "alerts_triggered": 0,
+                "growth_rate": {"users": 0, "accounts": 0, "alerts": 0},
+                "error": str(e)
+            },
+            "user_growth": [],
+            "alert_trends": [],
+            "alert_distribution": [],
+            "top_categories": [],
+            "recent_alerts": []
+        }
     finally:
         db.close()
-    
-    return {
-        "stats": stats,
-        "user_growth": [],
-        "alert_trends": [],
-        "alert_distribution": [],
-        "top_categories": [],
-        "recent_alerts": []
-    }
 
 @router.get("/health")
 async def health_check():
