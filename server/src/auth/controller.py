@@ -64,21 +64,21 @@ def verify_otp(data: OTPSchema, db: Session = Depends(get_db)):
 @router.post("/login")
 def login_user(data: LoginSchema, db: Session = Depends(get_db)):
     user = db.query(User).filter_by(email=data.email).first()
-    
+
     if not user:
         raise HTTPException(401, "Invalid credentials")
-    
+
     hashed_password = hashlib.sha256(data.password.encode()).hexdigest()
-    
+
     if user.password != hashed_password:
         raise HTTPException(401, "Invalid credentials")
-    
+
     if not user.is_verified:
         raise HTTPException(403, "Account not verified")
 
     # Create JWT access token
     access_token = create_access_token(subject=user.id, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    
+
     return {
         "message": "Login successful",
         "access_token": access_token,
@@ -92,20 +92,20 @@ def login_user(data: LoginSchema, db: Session = Depends(get_db)):
 def forgot_password(data: ForgotPasswordSchema, db: Session = Depends(get_db)):
     # Check if user exists
     user = db.query(User).filter_by(email=data.email).first()
-    
+
     if not user:
         raise HTTPException(404, "User not found")
-    
+
     # Generate OTP
     otp_code = generate_otp()
-    
+
     # Set expiry to 5 minutes from now
     expires_at = datetime.utcnow() + timedelta(minutes=5)
-    
+
     # Delete any existing unused reset OTPs for this user
     db.query(PasswordResetOTP).filter_by(user_id=user.id, is_used=False).delete()
     db.commit()
-    
+
     # Create new password reset OTP
     reset_otp = PasswordResetOTP(
         user_id=user.id,
@@ -113,10 +113,10 @@ def forgot_password(data: ForgotPasswordSchema, db: Session = Depends(get_db)):
         expires_at=expires_at,
         is_used=False
     )
-    
+
     db.add(reset_otp)
     db.commit()
-    
+
     return {
         "message": "OTP sent successfully",
         "expires_in": "5 minutes"
@@ -128,28 +128,28 @@ def forgot_password(data: ForgotPasswordSchema, db: Session = Depends(get_db)):
 def verify_reset_otp(data: VerifyResetOTPSchema, db: Session = Depends(get_db)):
     # Find user by email
     user = db.query(User).filter_by(email=data.email).first()
-    
+
     if not user:
         raise HTTPException(404, "User not found")
-    
+
     # Find matching OTP
     reset_otp = db.query(PasswordResetOTP).filter_by(
         user_id=user.id,
         otp=data.otp,
         is_used=False
     ).first()
-    
+
     if not reset_otp:
         raise HTTPException(400, "Invalid OTP")
-    
+
     # Check if OTP has expired
     if datetime.utcnow() > reset_otp.expires_at:
         raise HTTPException(400, "OTP has expired")
-    
+
     # Mark OTP as used
     reset_otp.is_used = True
     db.commit()
-    
+
     return {"message": "OTP verified successfully"}
 
 
@@ -158,32 +158,31 @@ def verify_reset_otp(data: VerifyResetOTPSchema, db: Session = Depends(get_db)):
 def reset_password(data: ResetPasswordSchema, db: Session = Depends(get_db)):
     # Find user by email
     user = db.query(User).filter_by(email=data.email).first()
-    
+
     if not user:
         raise HTTPException(404, "User not found")
-    
+
     # Check if there's a recently verified (used) OTP for this user
-    # This ensures password reset was initiated through forgot-password flow
     recent_used_otp = db.query(PasswordResetOTP).filter_by(
         user_id=user.id,
         is_used=True
     ).order_by(PasswordResetOTP.id.desc()).first()
-    
+
     if not recent_used_otp:
         raise HTTPException(400, "Password reset not initiated. Please use forgot-password first.")
-    
+
     # Check if OTP was recently used (within 10 minutes)
     if datetime.utcnow() - timedelta(minutes=10) > recent_used_otp.expires_at:
         raise HTTPException(400, "Password reset session expired. Please start again.")
-    
+
     # Hash and update password
     hashed_password = hash_password(data.new_password)
     user.password = hashed_password
-    
+
     # Clean up used OTPs for this user
     db.query(PasswordResetOTP).filter_by(user_id=user.id).delete()
     db.commit()
-    
+
     return {"message": "Password reset successfully"}
 
 
@@ -192,18 +191,18 @@ def reset_password(data: ResetPasswordSchema, db: Session = Depends(get_db)):
 def admin_login(data: AdminLoginSchema, db: Session = Depends(get_db)):
     """
     Admin login endpoint with bcrypt password verification
-    
+
     Args:
         data: AdminLoginSchema with email and password
         db: Database session
-    
+
     Returns:
         {
             "message": "Login successful",
             "admin_id": "<uuid>",
             "role": "ADMIN"
         }
-    
+
     Raises:
         HTTPException(401): Invalid credentials
         HTTPException(403): Admin account is inactive
@@ -211,18 +210,18 @@ def admin_login(data: AdminLoginSchema, db: Session = Depends(get_db)):
     """
     # Step 1: Check if admin exists by email
     admin = db.query(Admin).filter_by(email=data.email).first()
-    
+
     if not admin:
         raise HTTPException(401, "Invalid credentials")
-    
+
     # Step 2: Verify password using bcrypt
     if not verify_password_bcrypt(data.password, admin.password_hash):
         raise HTTPException(401, "Invalid credentials")
-    
+
     # Step 3: Check if admin account is active
     if not admin.is_active:
         raise HTTPException(403, "Admin account is inactive")
-    
+
     # Step 4: Return successful login response
     return {
         "message": "Login successful",

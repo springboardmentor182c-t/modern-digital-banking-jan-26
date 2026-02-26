@@ -1,3 +1,5 @@
-from src.database.core import engine, SessionLocal, Base
+"""Database package initializer."""
+
+from .core import engine, SessionLocal, Base
 
 __all__ = ["engine", "SessionLocal", "Base"]

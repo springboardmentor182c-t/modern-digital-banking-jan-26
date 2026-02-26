@@ -1,16 +1,197 @@
-node_modules/
-/Digital Banking Dashboard UI/dist/
-build/
-out/
-venv/
+# =============================================================================
+# Digital Banking Admin Dashboard - .gitignore
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# macOS
+# -----------------------------------------------------------------------------
+# Ignore all .DS_Store files everywhere in the project
+.DS_Store
+**/.DS_Store
+**/._.DS_Store
+
+# -----------------------------------------------------------------------------
+# Node.js / Frontend (client/)
+# -----------------------------------------------------------------------------
+# Dependencies
+client/node_modules/
+
+# Build outputs
+client/dist/
+client/build/
+client/.vite/
+client/.dist/
+
+# Environment files
+client/.env
+client/.env.local
+client/.env.development
+client/.env.production
+
+# Logs
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
+client/pnpm-debug.log*
+
+# Cache
+client/.cache/
+client/.parcel-cache/
+
+# -----------------------------------------------------------------------------
+# Python / Backend (server/)
+# -----------------------------------------------------------------------------
+# Virtual environments
+server/venv/
+server/venv-new/
+server/.venv/
+server/env/
+server/.env/
+
+# Byte-compiled / optimized / DLL files
+server/__pycache__/
+server/**/*.py[cod]
+server/*$py.class
+
+# Distribution / packaging
+server/.Python/
+server/build/
+server/develop-eggs/
+server/dist/
+server/downloads/
+server/eggs/
+server.egg-info/
+server/installed.cfg
+server/eggs-info/
+
+# PyInstaller
+#  *.pyz along with Python files
+*.pyz
+
+# Unit test / coverage reports
+server/.pytest_cache/
+server/.coverage
+server/coverage.xml
+server/*.cover
+server/htmlcov/
+server/.tox/
+server/.nox/
+
+# Virtual environments
+server/venv/
+server/ENV/
+server/env/
+server.venv/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
 .env
 .env.local
-.DS_Store
-Thumbs.db
-__pycache__/
-*.pyc
-# Ignore everything inside the uploads folder
-server/src/uploads/*
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
 
-# Except for a hidden file to keep the folder structure alive on GitHub
-!server/src/uploads/.gitkeep
+# -----------------------------------------------------------------------------
+# General / IDEs
+# -----------------------------------------------------------------------------
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-*
+
+# OS generated files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# -----------------------------------------------------------------------------
+# Project Specific
+# -----------------------------------------------------------------------------
+# Python cache
+*.pyc
+__pycache__/
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+.dockerignore
+
+# Miscellaneous
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# -----------------------------------------------------------------------------
+# Security
+# -----------------------------------------------------------------------------
+# Ignore secrets and keys (DO NOT COMMIT THESE!)
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets.json
+credentials.json
