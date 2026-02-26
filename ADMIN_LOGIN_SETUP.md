@@ -15,7 +15,7 @@ Your admin login system is now fully functional and linked with the database!
 Make sure the FastAPI backend is running:
 ```bash
 cd src/backend
-uvicorn main:app --reload --port 8080
+uvicorn main:app --reload --port 8000
 ```
 
 ### Step 2: Login via Admin Portal
@@ -101,7 +101,7 @@ admins table:
 ✓ FIXED - Using SHA256 instead of bcrypt due to library compatibility
 
 ### Backend Connection Failed
-- Check if uvicorn is running on port 8080
+- Check if uvicorn is running on port 8000
 - Check firewall settings
 - Verify database connection string in database.py
 

@@ -1,17 +1,20 @@
-# Accounts Module Updates - TODO
+# Admin Dashboard Connection - TODO
 
-## Task 1: Transfer Money - Add Dropdown for destination account
-- [ ] Replace "To Bank Name" input with a Select dropdown
-- [ ] Replace "To Account Number" input with the same dropdown (showing bank name - account number)
-- [ ] Filter out the source account from the destination dropdown
-- [ ] Update transferData state to include toAccountId
+## Task
+Connect the admin dashboard to display real user data from the database without changing existing functions.
 
-## Task 2: Hide Deleted/Closed Accounts
-- [ ] Filter AccountCards to only show Active accounts
-- [ ] Filter accounts table to only show Active accounts
-- [ ] Filter Export dropdown to only show Active accounts
+## Changes Required
 
-## Task 3: View Details Functionality
-- [ ] Add state for view details dialog (isViewDetailsOpen, selectedAccount)
-- [ ] Create View Details dialog with account information
-- [ ] Make "View Details" dropdown menu item functional
+### 1. Update Dashboard Controller (server/src/dashboard/controller.py)
+- [x] Query total users from User table
+- [x] Query active users (status = 'active')
+- [x] Query linked accounts count from Account table
+- [x] Query alerts from Alert table
+- [x] Calculate user growth trends from user creation dates
+- [x] Get alert type distribution from Alert table
+- [x] Get recent alerts from Alert table
+- [x] Calculate growth rates
+
+### 2. Ensure Database Models are Imported
+- Use src/models/user.py for User and Account models (has first_name, last_name)
+- Use src/alerts/models.py for Alert model

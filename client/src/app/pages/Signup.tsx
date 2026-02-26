@@ -66,7 +66,7 @@ export function Signup({ onNavigate }: SignupProps) {
           return;
         }
 
-        const response = await fetch("http://127.0.0.1:8080/auth/register", {
+        const response = await fetch("http://127.0.0.1:8000/auth/register", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -118,7 +118,7 @@ export function Signup({ onNavigate }: SignupProps) {
           return;
         }
 
-        const response = await fetch("http://127.0.0.1:8080/auth/verify-otp", {
+        const response = await fetch("http://127.0.0.1:8000/auth/verify-otp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -158,7 +158,7 @@ export function Signup({ onNavigate }: SignupProps) {
         fd.append("user_id", localStorage.getItem("user_id") || '');
         fd.append("file", formData.idDocument);
 
-        const response = await fetch("http://127.0.0.1:8080/kyc/identity", {
+        const response = await fetch("http://127.0.0.1:8000/kyc/identity", {
           method: "POST",
           body: fd
         });
@@ -217,7 +217,7 @@ export function Signup({ onNavigate }: SignupProps) {
         fd.append("file", formData.addressProof);
 
         console.log('Sending address upload request to backend');
-        const response = await fetch("http://127.0.0.1:8080/kyc/address", {
+        const response = await fetch("http://127.0.0.1:8000/kyc/address", {
           method: "POST",
           body: fd
         });
