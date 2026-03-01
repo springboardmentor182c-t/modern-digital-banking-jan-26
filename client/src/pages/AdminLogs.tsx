@@ -4,14 +4,15 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { 
-  Search, 
-  Filter, 
+import {
+  Search,
+  Filter,
   Download,
   FileText,
   Clock
 } from 'lucide-react';
-import { logsApi } from '../api/adminApi';
+import { logsApi, exportCsv } from '../api/adminApi';
+import { adminLogs as mockAdminLogs } from '../data/adminMockData';
 import {
   Select,
   SelectContent,
@@ -54,7 +55,7 @@ export function AdminLogs() {
   const loadLogs = async () => {
     setIsLoading(true);
     const response = await logsApi.getLogs(actionFilter !== 'all' ? actionFilter : undefined);
-    
+
     if (response.data) {
       const transformedLogs: Log[] = response.data.logs.map(log => ({
         id: log.id,
@@ -67,11 +68,25 @@ export function AdminLogs() {
         details: log.details,
         timestamp: log.timestamp
       }));
-      
+
       setLogs(transformedLogs);
       setTotal(response.data.total);
     } else {
-      toast.error('Failed to load logs', { description: response.error });
+      // Fallback to mock data
+      toast.info('Using demo data', { description: 'Database unavailable — showing sample data' });
+      const mapped: Log[] = mockAdminLogs.map(l => ({
+        id: l.id,
+        admin_id: l.adminId,
+        admin_name: l.adminName,
+        action: l.action,
+        target_type: l.targetType,
+        target_id: l.targetId,
+        target_name: l.targetName,
+        details: l.details,
+        timestamp: l.timestamp
+      }));
+      setLogs(mapped);
+      setTotal(mapped.length);
     }
     setIsLoading(false);
   };
@@ -85,6 +100,8 @@ export function AdminLogs() {
         week: response.data.this_week,
         month: response.data.this_month
       });
+    } else {
+      setStats({ total: mockAdminLogs.length, today: 2, week: mockAdminLogs.length, month: mockAdminLogs.length });
     }
   };
 
@@ -111,18 +128,32 @@ export function AdminLogs() {
     return matchesSearch;
   });
 
+  const handleExport = async () => {
+    toast.loading('Exporting audit logs...');
+    const success = await exportCsv('/admin/logs/export/csv', 'audit_logs.csv');
+    toast.dismiss();
+    if (success) {
+      toast.success('Export successful');
+    } else {
+      toast.error('Export failed');
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="p-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h2 className="text-2xl font-semibold">Admin Activity Logs</h2>
-          <p className="text-muted-foreground mt-1">Comprehensive audit trail of all admin actions</p>
+          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-700 to-gray-900">
+            Audit Logs
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">System activity and administrator actions trace</p>
         </div>
-        <Button variant="outline" className="border-border hover:bg-accent">
-          <Download className="w-4 h-4 mr-2" />
-          Export Logs
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-2" />
+            Export Logs
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -230,8 +261,8 @@ export function AdminLogs() {
               </thead>
               <tbody>
                 {filteredLogs.map((log) => (
-                  <tr 
-                    key={log.id} 
+                  <tr
+                    key={log.id}
                     className="border-b border-border hover:bg-accent/30 transition-colors"
                   >
                     <td className="py-4 px-4">
@@ -329,8 +360,8 @@ export function AdminLogs() {
           <div>
             <h4 className="font-semibold text-info-foreground mb-2">Audit & Compliance</h4>
             <p className="text-sm text-info-foreground">
-              All administrative actions are logged for security and compliance purposes. 
-              Logs are retained for 7 years and cannot be modified or deleted. 
+              All administrative actions are logged for security and compliance purposes.
+              Logs are retained for 7 years and cannot be modified or deleted.
               For detailed audit reports, please contact the compliance team.
             </p>
           </div>

@@ -3,16 +3,17 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { 
-  Search, 
-  Filter, 
+import {
+  Search,
+  Filter,
   Download,
   AlertCircle,
   DollarSign,
   FileText,
   TrendingUp
 } from 'lucide-react';
-import { alertsApi } from '../api/adminApi';
+import { alertsApi, exportCsv } from '../api/adminApi';
+import { systemAlerts as mockSystemAlerts } from '../data/adminMockData';
 import {
   Select,
   SelectContent,
@@ -56,7 +57,7 @@ export function AdminAlerts() {
       typeFilter !== 'all' ? typeFilter : undefined,
       severityFilter !== 'all' ? severityFilter : undefined
     );
-    
+
     if (response.data) {
       // Transform API data
       const transformedAlerts: Alert[] = response.data.alerts.map(alert => ({
@@ -69,12 +70,30 @@ export function AdminAlerts() {
         status: alert.status as 'read' | 'unread',
         timestamp: alert.timestamp || new Date().toISOString()
       }));
-      
+
       setAlerts(transformedAlerts);
       setTypeCounts(response.data.type_counts);
       setTotal(response.data.total);
     } else {
-      toast.error('Failed to load alerts', { description: response.error });
+      // Fallback to mock data
+      toast.info('Using demo data', { description: 'Database unavailable — showing sample data' });
+      const mapped: Alert[] = mockSystemAlerts.map(a => ({
+        id: a.id,
+        user_id: a.userId,
+        user_name: a.userName,
+        type: a.type,
+        message: a.message,
+        severity: a.severity,
+        status: a.status,
+        timestamp: a.timestamp
+      }));
+      setAlerts(mapped);
+      setTypeCounts({
+        low_balance: mapped.filter(a => a.type === 'low_balance').length,
+        bill_due: mapped.filter(a => a.type === 'bill_due').length,
+        budget_exceeded: mapped.filter(a => a.type === 'budget_exceeded').length
+      });
+      setTotal(mapped.length);
     }
     setIsLoading(false);
   };
@@ -119,18 +138,32 @@ export function AdminAlerts() {
     return matchesSearch;
   });
 
+  const handleExport = async () => {
+    toast.loading('Exporting alerts data...');
+    const success = await exportCsv('/admin/alerts/export/csv', 'alerts_export.csv');
+    toast.dismiss();
+    if (success) {
+      toast.success('Export successful');
+    } else {
+      toast.error('Export failed');
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="p-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h2 className="text-2xl font-semibold">Alerts Management</h2>
-          <p className="text-muted-foreground mt-1">Monitor and manage system-wide alerts</p>
+          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-orange-600">
+            System Alerts
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">Monitor and manage platform alerts and notifications</p>
         </div>
-        <Button variant="outline" className="border-border hover:bg-accent">
-          <Download className="w-4 h-4 mr-2" />
-          Export Alerts
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-2" />
+            Export Report
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -249,10 +282,10 @@ export function AdminAlerts() {
               <tbody>
                 {filteredAlerts.map((alert) => {
                   const Icon = typeIcons[alert.type];
-                  
+
                   return (
-                    <tr 
-                      key={alert.id} 
+                    <tr
+                      key={alert.id}
                       className="border-b border-border hover:bg-accent/30 transition-colors"
                     >
                       <td className="py-4 px-4">
@@ -290,7 +323,7 @@ export function AdminAlerts() {
                         </Badge>
                       </td>
                       <td className="py-4 px-4">
-                        <Badge 
+                        <Badge
                           className={statusColors[alert.status]}
                           onClick={() => alert.status === 'unread' && handleMarkAsRead(alert.id)}
                           style={{ cursor: alert.status === 'unread' ? 'pointer' : 'default' }}

@@ -213,11 +213,13 @@ pip install -r requirements.txt
 
 ---
 
-### 4. Database Setup (Optional)
-
 The backend works with **mock data** by default. To use PostgreSQL:
 
 ```bash
+# Start PostgreSQL service (macOS with Homebrew)
+# Note: Adjust the version (e.g., @14) if you have a specific version installed
+brew services start postgresql@14
+
 # Create PostgreSQL database
 createdb digital_banking_admin
 
@@ -238,7 +240,7 @@ cd server
 source venv/bin/activate
 
 # Run with uvicorn
-uvicorn src.main:app --host 0.0.0.0 --port 8000
+cd 
 ```
 
 The API will be available at: **http://localhost:8000**

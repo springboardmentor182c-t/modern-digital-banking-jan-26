@@ -1,7 +1,7 @@
 {
-  "name": "@figma/my-make-file",
+  "name": "banking-client",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "build": "vite build",
@@ -64,10 +64,12 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
-    "@types/node": "^25.3.1",
+    "@types/node": "^25.2.2",
+    "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",
-    "vite": "^6.4.1"
+    "vite": "6.3.5"
   },
   "peerDependencies": {
     "react": "18.3.1",
@@ -85,5 +87,17 @@
     "overrides": {
       "vite": "6.3.5"
     }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

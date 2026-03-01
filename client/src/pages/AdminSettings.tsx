@@ -5,7 +5,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { Badge } from '../components/ui/badge';
-import { 
+import {
   Shield,
   Bell,
   Database,
@@ -15,6 +15,7 @@ import {
   Save
 } from 'lucide-react';
 import { settingsApi } from '../api/adminApi';
+import { adminSystemSettings as mockSettings } from '../data/adminMockData';
 import { toast } from 'sonner';
 
 interface Settings {
@@ -69,11 +70,13 @@ export function AdminSettings() {
   const loadSettings = async () => {
     setIsLoading(true);
     const response = await settingsApi.getSettings();
-    
+
     if (response.data) {
       setSettings(response.data);
     } else {
-      toast.error('Failed to load settings', { description: response.error });
+      // Fallback to mock settings
+      toast.info('Using demo settings', { description: 'Database unavailable — showing default settings' });
+      setSettings({ id: 1, ...mockSettings });
     }
     setIsLoading(false);
   };
@@ -81,7 +84,7 @@ export function AdminSettings() {
   const handleSaveSettings = async () => {
     setIsSaving(true);
     const response = await settingsApi.updateSettings(settings as unknown as Record<string, unknown>);
-    
+
     if (response.data) {
       toast.success('Settings saved successfully', {
         description: 'Your changes have been applied to the system'
@@ -215,7 +218,7 @@ export function AdminSettings() {
               <p className="font-medium">Email Notifications</p>
               <p className="text-sm text-muted-foreground">Send alerts via email</p>
             </div>
-            <Switch 
+            <Switch
               checked={settings.email_notifications}
               onCheckedChange={(checked) => updateSetting('email_notifications', checked)}
             />
@@ -226,7 +229,7 @@ export function AdminSettings() {
               <p className="font-medium">SMS Notifications</p>
               <p className="text-sm text-muted-foreground">Send critical alerts via SMS</p>
             </div>
-            <Switch 
+            <Switch
               checked={settings.sms_notifications}
               onCheckedChange={(checked) => updateSetting('sms_notifications', checked)}
             />
@@ -237,7 +240,7 @@ export function AdminSettings() {
               <p className="font-medium">Push Notifications</p>
               <p className="text-sm text-muted-foreground">Mobile app push notifications</p>
             </div>
-            <Switch 
+            <Switch
               checked={settings.push_notifications}
               onCheckedChange={(checked) => updateSetting('push_notifications', checked)}
             />
@@ -248,7 +251,7 @@ export function AdminSettings() {
               <p className="font-medium">Admin Alert Digest</p>
               <p className="text-sm text-muted-foreground">Daily summary of all system alerts</p>
             </div>
-            <Switch 
+            <Switch
               checked={settings.admin_digest}
               onCheckedChange={(checked) => updateSetting('admin_digest', checked)}
             />
@@ -274,7 +277,7 @@ export function AdminSettings() {
               <p className="font-medium">Two-Factor Authentication</p>
               <p className="text-sm text-muted-foreground">Require 2FA for admin access</p>
             </div>
-            <Switch 
+            <Switch
               checked={settings.two_factor_auth}
               onCheckedChange={(checked) => updateSetting('two_factor_auth', checked)}
             />
@@ -285,7 +288,7 @@ export function AdminSettings() {
               <p className="font-medium">Session Timeout</p>
               <p className="text-sm text-muted-foreground">Auto-logout after inactivity</p>
             </div>
-            <Switch 
+            <Switch
               checked={settings.session_timeout > 0}
               onCheckedChange={(checked) => updateSetting('session_timeout', checked ? 30 : 0)}
             />
@@ -296,7 +299,7 @@ export function AdminSettings() {
               <p className="font-medium">IP Whitelisting</p>
               <p className="text-sm text-muted-foreground">Restrict admin access to specific IPs</p>
             </div>
-            <Switch 
+            <Switch
               checked={settings.ip_whitelisting}
               onCheckedChange={(checked) => updateSetting('ip_whitelisting', checked)}
             />
@@ -345,7 +348,7 @@ export function AdminSettings() {
               <p className="font-medium">Maintenance Mode</p>
               <p className="text-sm text-muted-foreground">Block user access for system maintenance</p>
             </div>
-            <Switch 
+            <Switch
               checked={settings.maintenance_mode}
               onCheckedChange={(checked) => updateSetting('maintenance_mode', checked)}
             />
@@ -356,7 +359,7 @@ export function AdminSettings() {
               <p className="font-medium">Auto-Backup</p>
               <p className="text-sm text-muted-foreground">Daily automated database backups</p>
             </div>
-            <Switch 
+            <Switch
               checked={settings.auto_backup}
               onCheckedChange={(checked) => updateSetting('auto_backup', checked)}
             />
@@ -367,7 +370,7 @@ export function AdminSettings() {
               <p className="font-medium">Debug Mode</p>
               <p className="text-sm text-muted-foreground">Enable detailed error logging</p>
             </div>
-            <Switch 
+            <Switch
               checked={settings.debug_mode}
               onCheckedChange={(checked) => updateSetting('debug_mode', checked)}
             />
@@ -432,8 +435,8 @@ export function AdminSettings() {
         <Button variant="outline">
           Cancel
         </Button>
-        <Button 
-          onClick={handleSaveSettings} 
+        <Button
+          onClick={handleSaveSettings}
           className="bg-primary hover:bg-primary/90"
           disabled={isSaving}
         >

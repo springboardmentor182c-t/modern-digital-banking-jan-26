@@ -94,7 +94,7 @@ New Files:
 
 The admin login endpoint can be called from the frontend:
 
-fetch('http://127.0.0.1:8000/admin/login', {
+fetch('http://127.0.0.1:8080/admin/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -126,10 +126,10 @@ fetch('http://127.0.0.1:8000/admin/login', {
    python init_admin.py
 
 3. Start your backend server:
-   uvicorn main:app --reload --port 8000
+   uvicorn main:app --reload --port 8080
 
 4. Test admin login:
-   POST http://127.0.0.1:800/admin/login
+   POST http://127.0.0.1:8080/admin/login
    Body: {"email": "admin@smartbank.com", "password": "Admin@123"}
 
 ═══════════════════════════════════════════════════════════════════════════════

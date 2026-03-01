@@ -11,6 +11,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: AdminUser | null;
+  token: string | null;
   login: (email: string, password: string) => Promise<{ error?: string }>;
   logout: () => void;
 }
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<AdminUser | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('admin_token'));
 
   useEffect(() => {
     // Check if token exists and validate it
@@ -57,6 +59,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userResponse.data) {
           setUser(userResponse.data);
           setIsAuthenticated(true);
+          setToken(response.data.access_token);
+          localStorage.setItem('admin_token', response.data.access_token);
           return {};
         }
       } catch (error) {
@@ -71,10 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authApi.logout();
     setUser(null);
     setIsAuthenticated(false);
+    setToken(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
