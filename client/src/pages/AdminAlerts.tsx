@@ -13,7 +13,6 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { alertsApi, exportCsv } from '../api/adminApi';
-import { systemAlerts as mockSystemAlerts } from '../data/adminMockData';
 import {
   Select,
   SelectContent,
@@ -75,25 +74,8 @@ export function AdminAlerts() {
       setTypeCounts(response.data.type_counts);
       setTotal(response.data.total);
     } else {
-      // Fallback to mock data
-      toast.info('Using demo data', { description: 'Database unavailable — showing sample data' });
-      const mapped: Alert[] = mockSystemAlerts.map(a => ({
-        id: a.id,
-        user_id: a.userId,
-        user_name: a.userName,
-        type: a.type,
-        message: a.message,
-        severity: a.severity,
-        status: a.status,
-        timestamp: a.timestamp
-      }));
-      setAlerts(mapped);
-      setTypeCounts({
-        low_balance: mapped.filter(a => a.type === 'low_balance').length,
-        bill_due: mapped.filter(a => a.type === 'bill_due').length,
-        budget_exceeded: mapped.filter(a => a.type === 'budget_exceeded').length
-      });
-      setTotal(mapped.length);
+      // API unavailable
+      toast.error('Failed to load alerts', { description: 'Please check your connection and try again' });
     }
     setIsLoading(false);
   };

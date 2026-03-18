@@ -3,7 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Gift, Star, TrendingUp, Award, Sparkles } from 'lucide-react';
-import { rewards } from '@/data/mockData';
+
+const rewards = {
+  totalPoints: 0,
+  programName: 'SmartBank Rewards',
+  tier: 'Bronze',
+  pointsToNextTier: 0,
+  recentEarnings: [] as Array<{ date: string; points: number; description: string }>
+};
 
 export function Rewards() {
   const pointsProgress = (rewards.totalPoints / (rewards.totalPoints + rewards.pointsToNextTier)) * 100;

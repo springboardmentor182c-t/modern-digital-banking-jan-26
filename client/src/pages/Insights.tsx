@@ -10,7 +10,10 @@ import {
   TrendingDown,
   DollarSign
 } from 'lucide-react';
-import { alerts, spendingByCategory, cashFlowData } from '@/data/mockData';
+
+const alerts: Array<{ id: number; type: 'warning' | 'success' | 'info'; message: string; date: string; icon: string }> = [];
+const spendingByCategory: Array<{ name: string; value: number; fill: string }> = [];
+const cashFlowData: Array<{ month: string; income: number; expenses: number }> = [];
 import {
   PieChart,
   Pie,

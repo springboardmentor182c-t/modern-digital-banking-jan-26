@@ -13,14 +13,6 @@ import {
 import { dashboardApi } from '../api/adminApi';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
-import {
-  adminStats as mockAdminStats,
-  systemAlerts as mockSystemAlerts,
-  alertTrendData as mockAlertTrendData,
-  userGrowthData as mockUserGrowthData,
-  alertTypeDistribution as mockAlertTypeDistribution,
-  topAlertCategories as mockTopAlertCategories,
-} from '../data/adminMockData';
 
 export function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -83,22 +75,8 @@ export function AdminDashboard() {
       setTopAlertCategories(top_categories || []);
       setRecentAlerts(recent_alerts || []);
     } else {
-      // Fallback to mock data
-      toast.info('Using demo data', { description: 'Database unavailable — showing sample data' });
-      setStats(mockAdminStats);
-      setUserGrowthData(mockUserGrowthData);
-      setAlertTrendData(mockAlertTrendData);
-      setAlertTypeDistribution(mockAlertTypeDistribution);
-      setTopAlertCategories(mockTopAlertCategories);
-      setRecentAlerts(mockSystemAlerts.map(a => ({
-        id: a.id,
-        user_name: a.userName,
-        type: a.type,
-        message: a.message,
-        severity: a.severity,
-        status: a.status,
-        timestamp: a.timestamp
-      })));
+      // API unavailable
+      toast.error('Failed to load dashboard data', { description: 'Please check your connection and try again' });
     }
     setIsLoading(false);
   };

@@ -13,7 +13,6 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { usersApi, exportCsv } from '../api/adminApi';
-import { systemUsers as mockSystemUsers } from '../data/adminMockData';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,20 +77,8 @@ export function AdminUsers() {
       setUsers(transformedUsers);
       setTotal(response.data.total);
     } else {
-      // Fallback to mock data
-      toast.info('Using demo data', { description: 'Database unavailable — showing sample data' });
-      const mapped: User[] = mockSystemUsers.map(u => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        kyc_status: u.kycStatus,
-        account_count: u.accountCount,
-        joined_date: u.joinedDate,
-        status: u.status,
-        last_active: u.lastActive
-      }));
-      setUsers(mapped);
-      setTotal(mapped.length);
+      // API unavailable
+      toast.error('Failed to load users', { description: 'Please check your connection and try again' });
     }
     setIsLoading(false);
   };
@@ -101,11 +88,8 @@ export function AdminUsers() {
     if (response.data) {
       setStats(response.data);
     } else {
-      // Fallback stats from mock
-      const active = mockSystemUsers.filter(u => u.status === 'active').length;
-      const verified = mockSystemUsers.filter(u => u.kycStatus === 'verified').length;
-      const pending = mockSystemUsers.filter(u => u.kycStatus === 'pending').length;
-      setStats({ total: mockSystemUsers.length, active, verified_kyc: verified, pending_kyc: pending });
+      // API unavailable — keep defaults
+      toast.error('Failed to load user stats');
     }
   };
 

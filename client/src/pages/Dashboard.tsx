@@ -16,17 +16,16 @@ import {
   CheckCircle,
   Info
 } from 'lucide-react';
-import {
-  accounts,
-  transactions,
-  budgets,
-  bills,
-  rewards,
-  alerts,
-  spendingByCategory,
-  cashFlowData
-} from '@/data/mockData';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+
+const accounts: Array<{ id: number; type: string; accountNumber: string; balance: number; currency: string; icon: string; color: string }> = [];
+const transactions: Array<{ id: number; merchant: string; category: string; date: string; amount: number; type: 'debit' | 'credit'; status: 'completed' }> = [];
+const budgets: Array<{ id: number; category: string; spent: number; limit: number; icon: string; color: string }> = [];
+const bills: Array<{ id: number; name: string; category: string; dueDate: string; amount: number; status: 'upcoming' | 'paid' | 'overdue'; autoPay: boolean; icon: string }> = [];
+const rewards = { totalPoints: 0, programName: 'SmartBank Rewards', tier: 'Bronze', pointsToNextTier: 0, recentEarnings: [] as Array<{ date: string; points: number; description: string }> };
+const alerts: Array<{ id: number; type: 'warning' | 'success' | 'info'; message: string; date: string; icon: string }> = [];
+const spendingByCategory: Array<{ name: string; value: number; fill: string }> = [];
+const cashFlowData: Array<{ month: string; income: number; expenses: number }> = [];
 
 export function Dashboard() {
   const recentTransactions = transactions.slice(0, 5);

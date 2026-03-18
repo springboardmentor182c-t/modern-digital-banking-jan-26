@@ -10,11 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Calendar, DollarSign, Clock, Download } from 'lucide-react';
-import { bills } from '@/data/mockData';
 import { toast } from 'sonner';
 
 export function Bills() {
-  const [billsList, setBillsList] = useState(bills);
+  const [billsList, setBillsList] = useState<Array<{ id: number | string; name: string; category: string; dueDate: string; amount: number; status: 'upcoming' | 'paid' | 'overdue'; autoPay: boolean; icon: string }>>([]);
   const [isAddBillOpen, setIsAddBillOpen] = useState(false);
   const [baseCurrency, setBaseCurrency] = useState('INR');
 
@@ -93,7 +92,7 @@ export function Bills() {
 
   const handleExportCSV = () => {
     toast.success('Exporting bills to CSV...');
-    // Mock CSV export
+    // TODO: Implement CSV export
     setTimeout(() => {
       toast.success('Bills exported successfully!');
     }, 1000);
@@ -101,7 +100,7 @@ export function Bills() {
 
   const handleExportPDF = () => {
     toast.success('Exporting bills to PDF...');
-    // Mock PDF export
+    // TODO: Implement PDF export
     setTimeout(() => {
       toast.success('Bills exported successfully!');
     }, 1000);

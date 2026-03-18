@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { AccountCard } from '@/components/AccountCard';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Download, ArrowUpRight, ArrowDownRight, MoreHorizontal } from 'lucide-react';
-import { accounts } from '@/data/mockData';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +30,7 @@ import {
 import { toast } from 'sonner';
 
 export function Accounts() {
+  const [accounts] = useState<Array<{ id: number; type: string; accountNumber: string; balance: number; currency: string; icon: string; color: string }>>([]);
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
   const [newAccount, setNewAccount] = useState({
     bankName: '',

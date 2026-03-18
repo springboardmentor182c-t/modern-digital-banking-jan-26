@@ -12,7 +12,6 @@ import {
   Clock
 } from 'lucide-react';
 import { logsApi, exportCsv } from '../api/adminApi';
-import { adminLogs as mockAdminLogs } from '../data/adminMockData';
 import {
   Select,
   SelectContent,
@@ -72,21 +71,8 @@ export function AdminLogs() {
       setLogs(transformedLogs);
       setTotal(response.data.total);
     } else {
-      // Fallback to mock data
-      toast.info('Using demo data', { description: 'Database unavailable — showing sample data' });
-      const mapped: Log[] = mockAdminLogs.map(l => ({
-        id: l.id,
-        admin_id: l.adminId,
-        admin_name: l.adminName,
-        action: l.action,
-        target_type: l.targetType,
-        target_id: l.targetId,
-        target_name: l.targetName,
-        details: l.details,
-        timestamp: l.timestamp
-      }));
-      setLogs(mapped);
-      setTotal(mapped.length);
+      // API unavailable
+      toast.error('Failed to load logs', { description: 'Please check your connection and try again' });
     }
     setIsLoading(false);
   };
@@ -101,7 +87,8 @@ export function AdminLogs() {
         month: response.data.this_month
       });
     } else {
-      setStats({ total: mockAdminLogs.length, today: 2, week: mockAdminLogs.length, month: mockAdminLogs.length });
+      // API unavailable — keep defaults
+      toast.error('Failed to load log stats');
     }
   };
 

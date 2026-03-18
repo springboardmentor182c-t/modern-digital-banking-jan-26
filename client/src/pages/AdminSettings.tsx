@@ -15,7 +15,6 @@ import {
   Save
 } from 'lucide-react';
 import { settingsApi } from '../api/adminApi';
-import { adminSystemSettings as mockSettings } from '../data/adminMockData';
 import { toast } from 'sonner';
 
 interface Settings {
@@ -74,9 +73,8 @@ export function AdminSettings() {
     if (response.data) {
       setSettings(response.data);
     } else {
-      // Fallback to mock settings
-      toast.info('Using demo settings', { description: 'Database unavailable — showing default settings' });
-      setSettings({ id: 1, ...mockSettings });
+      // API unavailable — keep defaults already set in state
+      toast.error('Failed to load settings', { description: 'Using default settings' });
     }
     setIsLoading(false);
   };

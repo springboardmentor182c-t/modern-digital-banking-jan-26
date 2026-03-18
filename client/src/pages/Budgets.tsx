@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, TrendingUp, TrendingDown, Edit2, Trash2, Download } from 'lucide-react';
-import { spendingByCategory } from '@/data/mockData';
+const spendingByCategory: Array<{ name: string; value: number; fill: string }> = [];
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';

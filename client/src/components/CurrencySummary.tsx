@@ -18,7 +18,7 @@ export function CurrencySummary() {
   const [baseCurrency, setBaseCurrency] = useState('INR');
   const [lastUpdated] = useState(new Date());
 
-  // Mock data - in real app this would come from ExchangeRate API
+  // TODO: Replace with data from ExchangeRate API
   const currencyBalances: CurrencyBalance[] = [
     {
       currency: 'INR',
@@ -121,8 +121,8 @@ export function CurrencySummary() {
                       {curr.symbol}{curr.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className={curr.trend === 'up' ? 'text-green-600 border-green-200' : 'text-red-600 border-red-200'}
                   >
                     {curr.trend === 'up' ? (
