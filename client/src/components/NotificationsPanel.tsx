@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '@/services/api';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,64 +21,26 @@ interface NotificationsPanelProps {
 }
 
 export function NotificationsPanel({ isOpen, onClose }: NotificationsPanelProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'bill',
-      title: 'Bill Due Soon',
-      message: 'Your electricity bill of ₹2,450 is due in 3 days',
-      time: '2 hours ago',
-      read: false
-    },
-    {
-      id: '2',
-      type: 'balance',
-      title: 'Low Balance Alert',
-      message: 'Your savings account balance has dropped below ₹5,000',
-      time: '5 hours ago',
-      read: false
-    },
-    {
-      id: '3',
-      type: 'budget',
-      title: 'Budget Exceeded',
-      message: 'You have exceeded your Food & Dining budget by ₹450',
-      time: '1 day ago',
-      read: false
-    },
-    {
-      id: '4',
-      type: 'security',
-      title: 'New Login Detected',
-      message: 'Login from Chrome on Windows at 2:30 PM',
-      time: '1 day ago',
-      read: true
-    },
-    {
-      id: '5',
-      type: 'info',
-      title: 'Monthly Statement Ready',
-      message: 'Your December statement is now available to download',
-      time: '2 days ago',
-      read: true
-    },
-    {
-      id: '6',
-      type: 'bill',
-      title: 'Bill Payment Successful',
-      message: 'Internet bill of ₹999 paid successfully',
-      time: '3 days ago',
-      read: true
-    },
-    {
-      id: '7',
-      type: 'budget',
-      title: 'Budget Alert',
-      message: 'You have used 85% of your Shopping budget',
-      time: '3 days ago',
-      read: true
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchNotifications();
     }
-  ]);
+  }, [isOpen]);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getUserDashboard();
+      setNotifications(data.notifications || []);
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

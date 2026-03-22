@@ -48,6 +48,21 @@ class PasswordResetOTP(Base):
     expires_at = Column(DateTime)
     is_used = Column(Boolean, default=False)
 
+class Account(Base):
+    __tablename__ = "accounts"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    bank_name = Column(String)
+    account_name = Column(String)
+    account_number = Column(String)
+    account_type = Column(String)
+    currency = Column(String, default="INR")
+    balance = Column(Numeric(14, 2), default=0)
+    status = Column(String, default="Active")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Admin(Base):
     """Admin user model for admin portal authentication"""
     __tablename__ = "admins"

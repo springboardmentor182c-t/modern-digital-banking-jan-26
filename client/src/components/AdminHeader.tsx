@@ -52,24 +52,9 @@ export function AdminHeader({ title, onNavigate }: AdminHeaderProps) {
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel>System Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium">New user registered</p>
-                <p className="text-xs text-muted-foreground">2 minutes ago</p>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium">High alert triggered</p>
-                <p className="text-xs text-muted-foreground">15 minutes ago</p>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium">System update available</p>
-                <p className="text-xs text-muted-foreground">1 hour ago</p>
-              </div>
-            </DropdownMenuItem>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              No new notifications
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
 

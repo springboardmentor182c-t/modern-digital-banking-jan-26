@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, TrendingUp, TrendingDown, Edit2, Trash2, Download } from 'lucide-react';
-const spendingByCategory: Array<{ name: string; value: number; fill: string }> = [];
+import api from '@/services/api';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
@@ -28,19 +28,8 @@ export function Budgets() {
   const { token } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
-
-  // Form state
-  const [category, setCategory] = useState('');
-  const [limit, setLimit] = useState('');
-  const [spent, setSpent] = useState('0');
-
-  useEffect(() => {
-    fetchBudgets();
-  }, [token]);
+  const [spendingByCategory, setSpendingByCategory] = useState<Array<{ name: string; value: number; fill: string }>>([]);
+  const [monthlyData, setMonthlyData] = useState<Array<{ month: string; spent: number }>>([]);
 
   const fetchBudgets = async () => {
     if (!token) return;
@@ -66,6 +55,31 @@ export function Budgets() {
   const remaining = totalBudget - totalSpent;
   const percentageUsed = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
+
+  // Form state
+  const [category, setCategory] = useState('');
+  const [limit, setLimit] = useState('');
+  const [spent, setSpent] = useState('0');
+
+  useEffect(() => {
+    fetchBudgets();
+    fetchDashboardData();
+  }, [token]);
+
+  const fetchDashboardData = async () => {
+    try {
+      const data = await api.getUserDashboard();
+      setSpendingByCategory(data.spendingByCategory || []);
+      setMonthlyData(data.monthlySpending || []);
+    } catch (error) {
+      console.error('Failed to load spending data:', error);
+    }
+  };
+
   const categories = [
     'Food & Dining',
     'Shopping',
@@ -81,14 +95,7 @@ export function Budgets() {
     'Other'
   ];
 
-  const monthlyData = [
-    { month: 'Aug', spent: 1356 },
-    { month: 'Sep', spent: 1289 },
-    { month: 'Oct', spent: 1445 },
-    { month: 'Nov', spent: 1312 },
-    { month: 'Dec', spent: 1523 },
-    { month: 'Jan', spent: totalSpent }
-  ];
+
 
   const handleCreateBudget = async () => {
     if (!category || !limit) {

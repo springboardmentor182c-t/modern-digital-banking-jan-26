@@ -1,20 +1,42 @@
+import { useState, useEffect } from 'react';
+import api from '@/services/api';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Gift, Star, TrendingUp, Award, Sparkles } from 'lucide-react';
 
-const rewards = {
-  totalPoints: 0,
-  programName: 'SmartBank Rewards',
-  tier: 'Bronze',
-  pointsToNextTier: 0,
-  recentEarnings: [] as Array<{ date: string; points: number; description: string }>
-};
-
 export function Rewards() {
-  const pointsProgress = (rewards.totalPoints / (rewards.totalPoints + rewards.pointsToNextTier)) * 100;
+  const [rewards, setRewards] = useState({
+    totalPoints: 0,
+    programName: 'SmartBank Rewards',
+    tier: 'Bronze',
+    pointsToNextTier: 0,
+    recentEarnings: [] as Array<{ date: string; points: number; description: string }>
+  });
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchRewards = async () => {
+      try {
+        const data = await api.getUserDashboard();
+        if (data.rewards) {
+          setRewards(data.rewards);
+        }
+      } catch (error) {
+        console.error('Failed to load rewards:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRewards();
+  }, []);
+
+  const pointsProgress = rewards.totalPoints + rewards.pointsToNextTier > 0
+    ? (rewards.totalPoints / (rewards.totalPoints + rewards.pointsToNextTier)) * 100
+    : 0;
+
+  // These are UI config for redemption tiers, not user-specific mock data
   const rewardCategories = [
     { name: 'Travel', points: 5000, icon: '✈️' },
     { name: 'Shopping', points: 2500, icon: '🛍️' },
@@ -57,13 +79,15 @@ export function Rewards() {
             </div>
             <div className="text-right">
               <p className="text-sm text-white/80">Next Tier</p>
-              <p className="font-semibold">Platinum</p>
+              <p className="font-semibold">
+                {rewards.tier === 'Bronze' ? 'Silver' : rewards.tier === 'Silver' ? 'Gold' : rewards.tier === 'Gold' ? 'Platinum' : 'Max'}
+              </p>
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>{rewards.pointsToNextTier} points to Platinum</span>
+              <span>{rewards.pointsToNextTier > 0 ? `${rewards.pointsToNextTier} points to next tier` : 'Top tier reached!'}</span>
               <span>{pointsProgress.toFixed(0)}%</span>
             </div>
             <Progress value={pointsProgress} className="h-2 bg-white/20 [&>div]:bg-white" />
@@ -78,29 +102,33 @@ export function Rewards() {
           <Button variant="ghost" size="sm">View All</Button>
         </div>
         <div className="space-y-4">
-          {rewards.recentEarnings.map((earning, index) => (
-            <div key={index} className="flex items-center justify-between p-4 bg-accent/50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
+          {rewards.recentEarnings.length > 0 ? (
+            rewards.recentEarnings.map((earning, index) => (
+              <div key={index} className="flex items-center justify-between p-4 bg-accent/50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{earning.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {earning.date ? new Date(earning.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      }) : 'N/A'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{earning.description}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(earning.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </p>
+                <div className="text-right">
+                  <p className="text-lg font-semibold text-green-600">+{earning.points}</p>
+                  <p className="text-xs text-muted-foreground">points</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-semibold text-green-600">+{earning.points}</p>
-                <p className="text-xs text-muted-foreground">points</p>
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">No recent earnings. Start spending to earn points!</p>
+          )}
         </div>
       </Card>
 

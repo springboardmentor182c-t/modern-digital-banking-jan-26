@@ -9,6 +9,7 @@ from src.auth.controller import router as auth_router
 from src.auth.kyc import router as kyc_router
 from src.users.transactions import router as transactions_router
 from src.users.budgets import router as budgets_router
+from src.users.user_dashboard import router as user_dashboard_router
 from src.models.user import Transaction, Budget
 
 # Admin routers
@@ -95,6 +96,7 @@ app.include_router(auth_router, prefix="/auth")
 app.include_router(kyc_router, prefix="/kyc")
 app.include_router(transactions_router, prefix="/api/transactions")
 app.include_router(budgets_router, prefix="/api/budgets")
+app.include_router(user_dashboard_router, prefix="/api/user-dashboard")
 
 # Admin routers (each has its own /admin/... prefix internally)
 app.include_router(dashboard_router)

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import api from '@/services/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -16,43 +17,46 @@ interface CurrencyBalance {
 
 export function CurrencySummary() {
   const [baseCurrency, setBaseCurrency] = useState('INR');
-  const [lastUpdated] = useState(new Date());
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [accounts, setAccounts] = useState<any[]>([]);
 
-  // TODO: Replace with data from ExchangeRate API
-  const currencyBalances: CurrencyBalance[] = [
-    {
-      currency: 'INR',
-      symbol: '₹',
-      balance: 125000,
-      exchangeRate: 1,
-      trend: 'up',
-      trendPercent: 0
-    },
-    {
-      currency: 'USD',
-      symbol: '$',
-      balance: 850,
-      exchangeRate: 83.25,
-      trend: 'down',
-      trendPercent: 0.5
-    },
-    {
-      currency: 'EUR',
-      symbol: '€',
-      balance: 420,
-      exchangeRate: 90.15,
-      trend: 'up',
-      trendPercent: 0.3
-    },
-    {
-      currency: 'GBP',
-      symbol: '£',
-      balance: 250,
-      exchangeRate: 105.80,
-      trend: 'up',
-      trendPercent: 0.2
+  const fetchAccounts = async () => {
+    try {
+      const data = await api.getAccounts();
+      setAccounts(data);
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Failed to load accounts for currency summary');
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
+
+  const currencyBalances: CurrencyBalance[] = useMemo(() => {
+    const grouped: Record<string, number> = {};
+    accounts.forEach(acc => {
+      // Default to INR if currency is somehow missing
+      const curr = acc.currency || 'INR';
+      // Only include active accounts in the summary balance
+      if (acc.status !== 'Inactive') {
+        grouped[curr] = (grouped[curr] || 0) + Number(acc.balance);
+      }
+    });
+
+    return Object.entries(grouped).map(([currency, balance]) => {
+      const symbols: Record<string, string> = { 'INR': '₹', 'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥' };
+      return {
+        currency,
+        symbol: symbols[currency] || currency,
+        balance,
+        exchangeRate: 1,
+        trend: 'up',
+        trendPercent: 0
+      };
+    });
+  }, [accounts]);
 
   const calculateConvertedValue = (balance: number, rate: number) => {
     if (baseCurrency === 'INR') {

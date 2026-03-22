@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '@/services/api';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,43 @@ import {
 import { toast } from 'sonner';
 
 export function Accounts() {
-  const [accounts] = useState<Array<{ id: number; type: string; accountNumber: string; balance: number; currency: string; icon: string; color: string }>>([]);
+  const [accounts, setAccounts] = useState<Array<any>>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAccounts = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getAccounts();
+      const mapped = data.map(acc => {
+        let icon = 'wallet';
+        let color = 'bg-primary';
+        if (acc.account_type === 'Savings') { icon = 'piggy-bank'; color = 'bg-success'; }
+        else if (acc.account_type === 'Credit') { icon = 'credit-card'; color = 'bg-destructive'; }
+        else if (acc.account_type === 'Investment') { icon = 'trending-up'; color = 'bg-secondary'; }
+
+        return {
+          id: acc.id,
+          type: acc.account_type,
+          accountNumber: acc.account_number,
+          balance: acc.balance,
+          currency: acc.currency,
+          status: acc.status,
+          icon,
+          color
+        };
+      });
+      setAccounts(mapped);
+    } catch (error) {
+      toast.error('Failed to load accounts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
+
   const [isAddAccountOpen, setIsAddAccountOpen] = useState(false);
   const [newAccount, setNewAccount] = useState({
     bankName: '',
@@ -40,19 +77,33 @@ export function Accounts() {
     balance: ''
   });
 
-  const handleAddAccount = (e: React.FormEvent) => {
+  const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Account added successfully!', {
-      description: `${newAccount.bankName} ${newAccount.accountType} account has been added.`
-    });
-    setIsAddAccountOpen(false);
-    setNewAccount({
-      bankName: '',
-      accountType: '',
-      accountNumber: '',
-      currency: 'INR',
-      balance: ''
-    });
+    try {
+      await api.createAccount({
+        bankName: newAccount.bankName,
+        accountType: newAccount.accountType,
+        accountNumber: newAccount.accountNumber,
+        currency: newAccount.currency,
+        initialBalance: Number(newAccount.balance)
+      });
+      toast.success('Account added successfully!', {
+        description: `${newAccount.bankName} ${newAccount.accountType} account has been added.`
+      });
+      setIsAddAccountOpen(false);
+      setNewAccount({
+        bankName: '',
+        accountType: '',
+        accountNumber: '',
+        currency: 'INR',
+        balance: ''
+      });
+      fetchAccounts();
+    } catch (error: any) {
+      toast.error('Failed to add account', {
+        description: error.message || 'An error occurred'
+      });
+    }
   };
 
   const handleExport = (format: string) => {
@@ -246,7 +297,7 @@ export function Accounts() {
                     </div>
                   </td>
                   <td className="py-4 px-4 text-right">
-                    <Badge className="bg-success text-success-foreground border-0">Active</Badge>
+                    <Badge className={account.status === 'Active' ? 'bg-success text-success-foreground border-0' : 'bg-muted text-muted-foreground border-0'}>{account.status || 'Active'}</Badge>
                   </td>
                   <td className="py-4 px-4 text-right">
                     <DropdownMenu>
@@ -258,8 +309,17 @@ export function Accounts() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>View Details</DropdownMenuItem>
                         <DropdownMenuItem>Transfer Funds</DropdownMenuItem>
-                        <DropdownMenuItem>Download Statement</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Close Account</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => api.downloadStatement(account.id, 'csv')}>Download Statement (CSV)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => api.downloadStatement(account.id, 'pdf')}>Download Statement (PDF)</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={async () => {
+                          try {
+                            await api.deleteAccount(account.id);
+                            toast.success('Account deleted successfully');
+                            fetchAccounts();
+                          } catch (err) {
+                            toast.error('Failed to delete account');
+                          }
+                        }}>Close Account</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
