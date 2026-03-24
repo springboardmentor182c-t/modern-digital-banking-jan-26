@@ -21,10 +21,10 @@ function Sidebar({ active = 'dashboard' }) {
 
             {/* User */}
             <div className="sidebar-user">
-                <div className="sidebar-avatar">JD</div>
+                <div className="sidebar-avatar">H</div>
                 <div className="sidebar-user-info">
-                    <div className="sidebar-user-name">John Doe</div>
-                    <div className="sidebar-user-email">john@example.com</div>
+                    <div className="sidebar-user-name">Heera</div>
+                    <div className="sidebar-user-email">heera@example.com</div>
                 </div>
             </div>
 

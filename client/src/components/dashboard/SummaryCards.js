@@ -1,41 +1,16 @@
-import React from 'react';
-
-const cards = [
-    {
-        label: 'Total Balance',
-        value: '₹76,641.50',
-        delta: '+12.5% from last month',
-        up: true,
-        icon: '$',
-        iconClass: 'icon-blue',
-    },
-    {
-        label: 'Monthly Income',
-        value: '₹5,200',
-        delta: '+5.2% from last month',
-        up: true,
-        icon: '↗',
-        iconClass: 'icon-green',
-    },
-    {
-        label: 'Monthly Expenses',
-        value: '₹1,976',
-        delta: '-8.4% from last month',
-        up: false,
-        icon: '↙',
-        iconClass: 'icon-orange',
-    },
-    {
-        label: 'Rewards Points',
-        value: '12,450',
-        delta: 'Gold Member',
-        up: null,
-        icon: '✦',
-        iconClass: 'icon-purple',
-    },
-];
+import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../../config';
 
 function SummaryCards() {
+    const [cards, setCards] = useState([]);
+
+    useEffect(() => {
+        fetch(`${API_BASE}/api/summary-cards`)
+            .then(res => res.json())
+            .then(data => setCards(data))
+            .catch(err => console.error('Error fetching summary cards:', err));
+    }, []);
+
     return (
         <div className="summary-grid">
             {cards.map((c) => (

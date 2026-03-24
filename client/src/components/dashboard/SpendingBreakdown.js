@@ -1,20 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-
-const categories = [
-    { name: 'Groceries', value: 456, color: '#6ee7b7' },
-    { name: 'Dining', value: 285, color: '#fde68a' },
-    { name: 'Shopping', value: 320, color: '#fca5a5' },
-    { name: 'Transport', value: 145, color: '#93c5fd' },
-    { name: 'Entertainment', value: 80, color: '#c4b5fd' },
-    { name: 'Bills', value: 680, color: '#d1d5db' },
-];
+import { API_BASE } from '../../config';
 
 function SpendingBreakdown() {
+    const [categories, setCategories] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [newCat, setNewCat] = useState({ name: '', value: 0, color: '#818cf8' });
+
+    const fetchSpending = () => {
+        fetch(`${API_BASE}/api/spending`)
+            .then(res => res.json())
+            .then(data => setCategories(data))
+            .catch(err => console.error('Error fetching spending breakdown:', err));
+    };
+
+    useEffect(() => {
+        fetchSpending();
+    }, []);
+
+    const handleAdd = (e) => {
+        e.preventDefault();
+        fetch(`${API_BASE}/api/spending`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newCat)
+        })
+            .then(() => {
+                fetchSpending();
+                setShowModal(false);
+                setNewCat({ name: '', value: 0, color: '#818cf8' });
+            });
+    };
+
+    const handleDelete = (name) => {
+        if (!window.confirm(`Delete ${name}?`)) return;
+        fetch(`${API_BASE}/api/spending/${name}`, { method: 'DELETE' })
+            .then(() => fetchSpending());
+    };
+
     return (
         <div className="card">
             <div className="card-header">
                 <span className="card-title">Spending Breakdown</span>
+                <span className="add-btn" onClick={() => setShowModal(true)}>+ Add</span>
             </div>
             <div className="spending-chart-wrap">
                 <ResponsiveContainer width="100%" height={200}>
@@ -27,6 +55,7 @@ function SpendingBreakdown() {
                             outerRadius={90}
                             paddingAngle={2}
                             dataKey="value"
+                            onClick={(entry) => entry && handleDelete(entry.name)}
                         >
                             {categories.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
@@ -41,7 +70,7 @@ function SpendingBreakdown() {
 
                 <div className="spending-legend">
                     {categories.map((c) => (
-                        <div className="spending-legend-item" key={c.name}>
+                        <div className="spending-legend-item" key={c.name} style={{ cursor: 'pointer' }} onClick={() => handleDelete(c.name)}>
                             <div className="legend-left">
                                 <div className="legend-dot" style={{ background: c.color }} />
                                 <span>{c.name}</span>
@@ -51,6 +80,35 @@ function SpendingBreakdown() {
                     ))}
                 </div>
             </div>
+
+            {showModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h3 className="modal-title">Add Spending Category</h3>
+                            <span className="modal-close" onClick={() => setShowModal(false)}>&times;</span>
+                        </div>
+                        <form onSubmit={handleAdd}>
+                            <div className="form-group">
+                                <label>Category Name</label>
+                                <input type="text" value={newCat.name} onChange={e => setNewCat({...newCat, name: e.target.value})} required placeholder="e.g. Travel" />
+                            </div>
+                            <div className="form-group">
+                                <label>Amount (₹)</label>
+                                <input type="number" value={newCat.value} onChange={e => setNewCat({...newCat, value: parseFloat(e.target.value)})} required />
+                            </div>
+                            <div className="form-group">
+                                <label>Color</label>
+                                <input type="color" value={newCat.color} onChange={e => setNewCat({...newCat, color: e.target.value})} />
+                            </div>
+                            <div className="form-actions">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary">Add Category</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

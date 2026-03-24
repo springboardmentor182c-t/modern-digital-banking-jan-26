@@ -1,29 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-
-const data = [
-    { month: 'Jul', Income: 4200, Expenses: 3100 },
-    { month: 'Aug', Income: 4500, Expenses: 3400 },
-    { month: 'Sep', Income: 4100, Expenses: 3200 },
-    { month: 'Oct', Income: 4600, Expenses: 4400 },
-    { month: 'Nov', Income: 4800, Expenses: 3800 },
-    { month: 'Dec', Income: 6000, Expenses: 4100 },
-    { month: 'Jan', Income: 4500, Expenses: 1500 },
-];
+import { API_BASE } from '../../config';
 
 function CashFlowChart() {
+    const [data, setData] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [newEntry, setNewEntry] = useState({ month: '', Income: 0, Expenses: 0 });
+
+    const fetchCashFlow = () => {
+        fetch(`${API_BASE}/api/cash-flow`)
+            .then(res => res.json())
+            .then(fetchedData => setData(fetchedData))
+            .catch(err => console.error('Error fetching cash flow data:', err));
+    };
+
+    useEffect(() => {
+        fetchCashFlow();
+    }, []);
+
+    const handleAdd = (e) => {
+        e.preventDefault();
+        fetch(`${API_BASE}/api/cash-flow`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newEntry)
+        })
+            .then(() => {
+                fetchCashFlow();
+                setShowModal(false);
+                setNewEntry({ month: '', Income: 0, Expenses: 0 });
+            });
+    };
+
+    const handleDelete = (month) => {
+        if (!window.confirm(`Delete ${month}?`)) return;
+        fetch(`${API_BASE}/api/cash-flow/${month}`, { method: 'DELETE' })
+            .then(() => fetchCashFlow());
+    };
+
     return (
         <div className="card">
             <div className="card-header">
                 <span className="card-title">Cash Flow</span>
+                <span className="add-btn" onClick={() => setShowModal(true)}>+ Add</span>
             </div>
             <div className="chart-wrapper">
                 <ResponsiveContainer width="100%" height={240}>
                     <BarChart data={data} barCategoryGap="30%" barGap={4}
                         margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                        onClick={(entry) => entry && entry.activePayload && handleDelete(entry.activePayload[0].payload.month)}
                     >
                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                         <XAxis dataKey="month" axisLine={false} tickLine={false}
@@ -42,6 +70,35 @@ function CashFlowChart() {
                     </BarChart>
                 </ResponsiveContainer>
             </div>
+
+            {showModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h3 className="modal-title">Add Cash Flow Data</h3>
+                            <span className="modal-close" onClick={() => setShowModal(false)}>&times;</span>
+                        </div>
+                        <form onSubmit={handleAdd}>
+                            <div className="form-group">
+                                <label>Month</label>
+                                <input type="text" value={newEntry.month} onChange={e => setNewEntry({...newEntry, month: e.target.value})} required placeholder="e.g. Apr" />
+                            </div>
+                            <div className="form-group">
+                                <label>Income</label>
+                                <input type="number" value={newEntry.Income} onChange={e => setNewEntry({...newEntry, Income: parseFloat(e.target.value)})} required />
+                            </div>
+                            <div className="form-group">
+                                <label>Expenses</label>
+                                <input type="number" value={newEntry.Expenses} onChange={e => setNewEntry({...newEntry, Expenses: parseFloat(e.target.value)})} required />
+                            </div>
+                            <div className="form-actions">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary">Add Data</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

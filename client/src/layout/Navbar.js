@@ -18,7 +18,7 @@ function Navbar({ title = 'Dashboard' }) {
                 </button>
 
                 {/* User avatar */}
-                <div className="user-avatar">JD</div>
+                <div className="user-avatar">H</div>
             </div>
         </header>
     );
