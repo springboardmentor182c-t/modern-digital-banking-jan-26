@@ -1,0 +1,136 @@
+"""
+ADMIN LOGIN SETUP GUIDE
+=======================
+
+This guide explains the admin login feature that has been added to your FastAPI backend.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+1. DATABASE REQUIREMENTS
+═══════════════════════════════════════════════════════════════════════════════
+
+New table created: 'admins'
+
+Columns:
+- id (UUID as String) - Primary key
+- email (String) - Unique, not null
+- password_hash (String) - Bcrypt hashed password
+- role (String) - Default: 'ADMIN'
+- is_active (Boolean) - Default: True
+- created_at (DateTime) - Timestamp of creation
+
+═══════════════════════════════════════════════════════════════════════════════
+
+2. INITIAL ADMIN USER SETUP
+═══════════════════════════════════════════════════════════════════════════════
+
+To create the initial admin user, run this command in your backend directory:
+
+    python init_admin.py
+
+This will create:
+- Email: admin@smartbank.com
+- Password: Admin@123
+- Role: ADMIN
+- Status: Active
+
+The script will only create the admin if it doesn't already exist.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+3. API ENDPOINT
+═══════════════════════════════════════════════════════════════════════════════
+
+Endpoint: POST /admin/login
+
+Request Body:
+{
+  "email": "admin@smartbank.com",
+  "password": "Admin@123"
+}
+
+Success Response (200):
+{
+  "message": "Login successful",
+  "admin_id": "550e8400-e29b-41d4-a716-446655440000",
+  "role": "ADMIN"
+}
+
+Error Responses:
+- 401 (Unauthorized): Invalid credentials
+- 403 (Forbidden): Admin account is inactive
+- 404 (Not Found): Admin not found
+
+═══════════════════════════════════════════════════════════════════════════════
+
+4. PASSWORD HASHING
+═══════════════════════════════════════════════════════════════════════════════
+
+Admin passwords are hashed using bcrypt (passlib library).
+
+Requirements:
+- Install passlib: pip install passlib
+- Install bcrypt: pip install bcrypt
+
+If bcrypt is not installed, the system falls back to SHA256 hashing.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+5. CODE STRUCTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+Files Modified:
+- models.py: Added Admin model with UUID primary key
+- schemas.py: Added AdminLoginSchema with email and password fields
+- auth.py: Added bcrypt utility functions and /admin/login endpoint
+
+New Files:
+- init_admin.py: Script to initialize the admin user
+
+═══════════════════════════════════════════════════════════════════════════════
+
+6. INTEGRATION WITH FRONTEND
+═══════════════════════════════════════════════════════════════════════════════
+
+The admin login endpoint can be called from the frontend:
+
+fetch('http://127.0.0.1:8000/admin/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: 'admin@smartbank.com',
+    password: 'Admin@123'
+  })
+})
+
+═══════════════════════════════════════════════════════════════════════════════
+
+7. IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+✓ No changes to existing user registration, login, or password reset flows
+✓ Admin passwords use bcrypt (stronger than SHA256 used for regular users)
+✓ Admin authentication is separate from regular user authentication
+✓ Admin accounts can be deactivated by setting is_active = False
+✓ No admin registration endpoint - only manual creation via init_admin.py
+
+═══════════════════════════════════════════════════════════════════════════════
+
+8. QUICK START
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Install dependencies:
+   pip install passlib bcrypt
+
+2. Initialize admin user:
+   python init_admin.py
+
+3. Start your backend server:
+   uvicorn main:app --reload --port 8000
+
+4. Test admin login:
+   POST http://127.0.0.1:800/admin/login
+   Body: {"email": "admin@smartbank.com", "password": "Admin@123"}
+
+═══════════════════════════════════════════════════════════════════════════════
+"""
