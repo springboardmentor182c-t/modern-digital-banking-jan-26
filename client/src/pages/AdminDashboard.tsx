@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { 
-  Users, 
-  UserCheck, 
+import {
+  Users,
+  UserCheck,
   Wallet,
   AlertCircle,
   TrendingUp,
@@ -57,10 +57,10 @@ export function AdminDashboard() {
   const loadDashboardData = async () => {
     setIsLoading(true);
     const response = await dashboardApi.getStats();
-    
+
     if (response.data) {
       const { stats: dashboardStats, user_growth, alert_trends, alert_distribution, top_categories, recent_alerts } = response.data;
-      
+
       setStats({
         totalUsers: dashboardStats.total_users || 0,
         activeUsers: dashboardStats.active_users || 0,
@@ -68,31 +68,32 @@ export function AdminDashboard() {
         alertsTriggered: dashboardStats.alerts_triggered || 0,
         growthRate: dashboardStats.growth_rate || { users: 0, accounts: 0, alerts: 0 }
       });
-      
+
       setUserGrowthData(user_growth || []);
       setAlertTrendData(alert_trends || []);
       setAlertTypeDistribution(alert_distribution || []);
       setTopAlertCategories(top_categories || []);
       setRecentAlerts(recent_alerts || []);
     } else {
-      toast.error('Failed to load dashboard data', { description: response.error });
+      // API unavailable
+      toast.error('Failed to load dashboard data', { description: 'Please check your connection and try again' });
     }
     setIsLoading(false);
   };
 
-  const StatCard = ({ 
-    title, 
-    value, 
-    change, 
-    changeType, 
-    icon: Icon, 
-    iconColor 
-  }: { 
-    title: string; 
-    value: string | number; 
-    change?: string; 
-    changeType: 'positive' | 'negative' | 'neutral'; 
-    icon: any; 
+  const StatCard = ({
+    title,
+    value,
+    change,
+    changeType,
+    icon: Icon,
+    iconColor
+  }: {
+    title: string;
+    value: string | number;
+    change?: string;
+    changeType: 'positive' | 'negative' | 'neutral';
+    icon: any;
     iconColor: string;
   }) => {
     const changeColors = {
@@ -177,10 +178,10 @@ export function AdminDashboard() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="users" 
-                    stroke="#7eb9e3" 
+                  <Line
+                    type="monotone"
+                    dataKey="users"
+                    stroke="#7eb9e3"
                     strokeWidth={3}
                     name="Total Users"
                     dot={{ fill: '#7eb9e3', r: 4 }}
@@ -253,8 +254,8 @@ export function AdminDashboard() {
                   {alertTypeDistribution.map((item) => (
                     <div key={item.name} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
+                        <div
+                          className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: item.fill }}
                         />
                         <span>{item.name}</span>
@@ -324,8 +325,8 @@ export function AdminDashboard() {
               };
 
               return (
-                <div 
-                  key={alert.id} 
+                <div
+                  key={alert.id}
                   className="flex items-start justify-between p-4 bg-accent/30 rounded-lg border border-border hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex-1">

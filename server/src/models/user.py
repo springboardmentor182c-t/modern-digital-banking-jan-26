@@ -13,7 +13,6 @@ class User(Base):
     phone = Column(String)
     password = Column(String)
     is_verified = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
 
 class OTP(Base):
     __tablename__ = "otps"
@@ -49,6 +48,21 @@ class PasswordResetOTP(Base):
     expires_at = Column(DateTime)
     is_used = Column(Boolean, default=False)
 
+class Account(Base):
+    __tablename__ = "accounts"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    bank_name = Column(String)
+    account_name = Column(String)
+    account_number = Column(String)
+    account_type = Column(String)
+    currency = Column(String, default="INR")
+    balance = Column(Numeric(14, 2), default=0)
+    status = Column(String, default="Active")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Admin(Base):
     """Admin user model for admin portal authentication"""
     __tablename__ = "admins"
@@ -75,18 +89,14 @@ class Transaction(Base):
     status = Column(String)  # 'completed' or 'pending'
     created_at = Column(DateTime, default=datetime.utcnow)
 
-
-# Accounts model
-class Account(Base):
-    __tablename__ = "accounts"
+# Budgets model
+class Budget(Base):
+    __tablename__ = "budgets"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    bank_name = Column(String, nullable=False)
-    account_name = Column(String, nullable=False)
-    account_number = Column(String, nullable=False)  # Masked as ****1234
-    account_type = Column(String, nullable=False)  # Savings, Checking, Credit Card, Investment
-    currency = Column(String, default="INR")
-    balance = Column(Numeric(14, 2), default=0.0)
-    status = Column(String, default="Active")  # Active / Inactive
+    category = Column(String, nullable=False)
+    spent = Column(Numeric(14, 2), default=0)
+    limit = Column(Numeric(14, 2), nullable=False)
+    icon = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)

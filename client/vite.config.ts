@@ -1,10 +1,7 @@
 import { defineConfig } from 'vite'
 import path from 'path'
-import { fileURLToPath } from 'url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [
@@ -13,7 +10,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  // Dev server proxy: forward /api requests to the backend running on port 8000
+  // Dev server proxy: forward /api requests to the backend running on port 8080
   // This allows frontend code to call `/api/...` without changing any existing code.
   server: {
     proxy: {
@@ -36,4 +33,16 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 })

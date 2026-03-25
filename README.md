@@ -213,11 +213,13 @@ pip install -r requirements.txt
 
 ---
 
-### 4. Database Setup (Optional)
-
 The backend works with **mock data** by default. To use PostgreSQL:
 
 ```bash
+# Start PostgreSQL service (macOS with Homebrew)
+# Note: Adjust the version (e.g., @14) if you have a specific version installed
+brew services start postgresql@14
+
 # Create PostgreSQL database
 createdb digital_banking_admin
 

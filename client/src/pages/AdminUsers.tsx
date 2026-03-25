@@ -3,16 +3,16 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { 
-  Search, 
-  Filter, 
+import {
+  Search,
+  Filter,
   Eye,
   UserCheck,
   UserX,
   Download,
   MoreHorizontal
 } from 'lucide-react';
-import { usersApi } from '../api/adminApi';
+import { usersApi, exportCsv } from '../api/adminApi';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,7 +60,7 @@ export function AdminUsers() {
   const loadUsers = async () => {
     setIsLoading(true);
     const response = await usersApi.getUsers(1, 50, statusFilter !== 'all' ? statusFilter : undefined);
-    
+
     if (response.data) {
       // Transform API data to match frontend expectations
       const transformedUsers: User[] = response.data.users.map(user => ({
@@ -73,11 +73,12 @@ export function AdminUsers() {
         status: user.status as 'active' | 'suspended' | 'inactive',
         last_active: user.last_active || new Date().toISOString()
       }));
-      
+
       setUsers(transformedUsers);
       setTotal(response.data.total);
     } else {
-      toast.error('Failed to load users', { description: response.error });
+      // API unavailable
+      toast.error('Failed to load users', { description: 'Please check your connection and try again' });
     }
     setIsLoading(false);
   };
@@ -86,6 +87,9 @@ export function AdminUsers() {
     const response = await usersApi.getUserStats();
     if (response.data) {
       setStats(response.data);
+    } else {
+      // API unavailable — keep defaults
+      toast.error('Failed to load user stats');
     }
   };
 
@@ -130,11 +134,22 @@ export function AdminUsers() {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
+
+  const handleExport = async () => {
+    toast.loading('Exporting users data...');
+    const success = await exportCsv('/admin/users/export/csv', 'users_export.csv');
+    toast.dismiss();
+    if (success) {
+      toast.success('Export successful');
+    } else {
+      toast.error('Export failed');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -144,9 +159,9 @@ export function AdminUsers() {
           <h2 className="text-2xl font-semibold">User Management</h2>
           <p className="text-muted-foreground mt-1">Manage registered users and their accounts</p>
         </div>
-        <Button variant="outline" className="border-border hover:bg-accent">
+        <Button variant="outline" className="border-border hover:bg-accent" onClick={handleExport}>
           <Download className="w-4 h-4 mr-2" />
-          Export Users
+          Export Data
         </Button>
       </div>
 
@@ -224,8 +239,8 @@ export function AdminUsers() {
               </thead>
               <tbody>
                 {filteredUsers.map((user) => (
-                  <tr 
-                    key={user.id} 
+                  <tr
+                    key={user.id}
                     className="border-b border-border hover:bg-accent/30 transition-colors"
                   >
                     <td className="py-4 px-4">
@@ -280,7 +295,7 @@ export function AdminUsers() {
                             View Details
                           </DropdownMenuItem>
                           {user.status === 'active' ? (
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => handleSuspendUser(user.id, user.name)}
                             >
@@ -288,7 +303,7 @@ export function AdminUsers() {
                               Suspend User
                             </DropdownMenuItem>
                           ) : (
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               className="text-green-600"
                               onClick={() => handleActivateUser(user.id, user.name)}
                             >
@@ -308,8 +323,8 @@ export function AdminUsers() {
           </div>
         ) : (
           <div className="py-12 text-center text-muted-foreground">
-            {searchQuery || statusFilter !== 'all' 
-              ? 'No users match your search criteria' 
+            {searchQuery || statusFilter !== 'all'
+              ? 'No users match your search criteria'
               : 'No users registered yet'}
           </div>
         )}

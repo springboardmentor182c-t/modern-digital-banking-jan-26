@@ -315,6 +315,26 @@ export async function downloadStatement(
   }
 }
 
+/**
+ * Get aggregated user dashboard data (accounts, transactions, budgets,
+ * rewards, alerts, spending, cashflow, notifications)
+ */
+export async function getUserDashboard(): Promise<any> {
+  try {
+    const response = await authenticatedFetch('/api/user-dashboard/summary');
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Failed to fetch dashboard' }));
+      throw new Error(error.detail || 'Failed to fetch dashboard');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching user dashboard:', error);
+    throw error;
+  }
+}
+
 export default {
   getAccounts,
   getAccount,
@@ -324,4 +344,6 @@ export default {
   transferMoney,
   requestPayment,
   downloadStatement,
+  getUserDashboard,
 };
+

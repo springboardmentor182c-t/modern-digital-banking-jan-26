@@ -6,7 +6,7 @@ Test script to verify admin login functionality
 import requests
 import json
 
-BASE_URL = "http://127.0.0.1:800"
+BASE_URL = "http://127.0.0.1:8080"
 
 def test_admin_login():
     print("=== Testing Admin Login ===\n")
@@ -39,9 +39,9 @@ def test_admin_login():
     
     except requests.exceptions.ConnectionError:
         print("✗ Error: Cannot connect to backend server")
-        print("  Make sure the uvicorn server is running on port 8000")
+        print("  Make sure the uvicorn server is running on port 8080")
         print("\n  To start the backend server, run:")
-        print("  cd src/backend && uvicorn main:app --reload --port 8000")
+        print("  cd src/backend && uvicorn main:app --reload --port 8080")
     except Exception as e:
         print(f"✗ Error: {str(e)}")
 

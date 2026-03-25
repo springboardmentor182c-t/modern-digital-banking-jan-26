@@ -58,6 +58,30 @@ class TransactionSchema(BaseModel):
         from_attributes = True
 
 
+# Budget Schemas
+class BudgetBaseSchema(BaseModel):
+    category: str
+    limit: float
+    icon: Optional[str] = None
+
+class BudgetCreateSchema(BudgetBaseSchema):
+    spent: Optional[float] = 0.0
+
+class BudgetUpdateSchema(BaseModel):
+    limit: Optional[float] = None
+    spent: Optional[float] = None
+    category: Optional[str] = None
+    icon: Optional[str] = None
+
+class BudgetSchema(BudgetBaseSchema):
+    id: int
+    user_id: int
+    spent: float
+    created_at: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 # KYC Schemas
 class IdentityUploadSchema(BaseModel):
     user_id: int
@@ -69,34 +93,3 @@ class AddressUploadSchema(BaseModel):
     city: str
     state: str
     zip_code: str
-
-
-# Account Schemas
-class AccountCreateSchema(BaseModel):
-    bank_name: str
-    account_type: str  # Checking, Savings, Credit, Investment
-    account_number: str
-    currency: str = "INR"
-    initial_balance: float = 0.0
-
-
-class AccountUpdateSchema(BaseModel):
-    bank_name: Optional[str] = None
-    account_type: Optional[str] = None
-    currency: Optional[str] = None
-    balance: Optional[float] = None
-    status: Optional[str] = None
-
-
-class AccountResponseSchema(BaseModel):
-    id: int
-    bank_name: str
-    account_name: str
-    account_number: str
-    account_type: str
-    currency: str
-    balance: float
-    status: str
-
-    class Config:
-        from_attributes = True

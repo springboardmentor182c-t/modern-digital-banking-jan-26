@@ -1,54 +1,123 @@
-from fastapi import FastAPI
-from src.database.core import engine, Base
+"""Entry point - FastAPI application with all routers."""
+
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+
+from src.database.core import engine, Base, SessionLocal
 from src.auth.controller import router as auth_router
 from src.auth.kyc import router as kyc_router
+from src.users.transactions import router as transactions_router
+from src.users.budgets import router as budgets_router
+from src.users.user_dashboard import router as user_dashboard_router
+from src.models.user import Transaction, Budget
 
-# Import admin routers
+# Admin routers
+from src.dashboard.controller import router as dashboard_router
 from src.users.controller import router as users_router
 from src.alerts.controller import router as alerts_router
-from src.logs.controller import router as logs_router
 from src.settings.controller import router as settings_router
-from src.dashboard.controller import router as dashboard_router
+from src.logs.controller import router as logs_router
 
-# Import accounts router
-from src.accounts.controller import router as accounts_router
+# Import all models so Base.metadata.create_all creates every table
+from src.logs.models import AdminLog          # noqa: F401
+from src.alerts.models import Alert           # noqa: F401
+from src.settings.models import Settings      # noqa: F401
+from src.models.user import User as UsersUser # noqa: F401
+from src.models.user import Budget            # noqa: F401
 
+# Create all tables
 Base.metadata.create_all(bind=engine)
-from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+
+# Seed default settings row if missing
+def seed_settings():
+    db = SessionLocal()
+    try:
+        from src.settings.models import Settings
+        if not db.query(Settings).first():
+            db.add(Settings(id=1))
+            db.commit()
+    except Exception:
+        pass
+    finally:
+        db.close()
+
+def seed_budgets():
+    import logging
+    logger = logging.getLogger(__name__)
+    db = SessionLocal()
+    try:
+        from src.models.user import Budget, User
+        users = db.query(User).all()
+        if not users:
+            logger.info("seed_budgets: No users in DB yet — skipping budget seeding.")
+            return
+
+        seeds = [
+            {"category": "Food & Dining",     "limit": 5000,  "spent": 3200,  "icon": "food-&-dining"},
+            {"category": "Shopping",           "limit": 4000,  "spent": 3800,  "icon": "shopping"},
+            {"category": "Transportation",     "limit": 2500,  "spent": 800,   "icon": "transportation"},
+            {"category": "Bills & Utilities",  "limit": 8000,  "spent": 8500,  "icon": "bills-&-utilities"},
+            {"category": "Entertainment",      "limit": 3000,  "spent": 2900,  "icon": "entertainment"},
+            {"category": "Healthcare",         "limit": 10000, "spent": 1500,  "icon": "healthcare"},
+            {"category": "Travel",             "limit": 15000, "spent": 4200,  "icon": "travel"},
+            {"category": "Groceries",          "limit": 6000,  "spent": 4500,  "icon": "groceries"},
+            {"category": "Education",          "limit": 5000,  "spent": 1500,  "icon": "education"},
+            {"category": "Personal Care",      "limit": 2000,  "spent": 1900,  "icon": "personal-care"},
+        ]
+
+        for user in users:
+            existing = db.query(Budget).filter_by(user_id=user.id).count()
+            if existing >= 10:
+                logger.info(f"seed_budgets: User {user.id} already has {existing} budgets — skipping.")
+                continue
+
+            added = 0
+            for seed in seeds:
+                if not db.query(Budget).filter_by(user_id=user.id, category=seed["category"]).first():
+                    db.add(Budget(
+                        user_id=user.id,
+                        category=seed["category"],
+                        limit=seed["limit"],
+                        spent=seed["spent"],
+                        icon=seed["icon"]
+                    ))
+                    added += 1
+            db.commit()
+            logger.info(f"seed_budgets: Seeded {added} budgets for user {user.id} ({user.email})")
+    except Exception as e:
+        logger.error(f"seed_budgets failed: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+seed_settings()
+seed_budgets()
+
+app = FastAPI(title="SmartBank API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For development, allows all origins
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Auth routes
+# Auth routers
 app.include_router(auth_router, prefix="/auth")
 app.include_router(kyc_router, prefix="/kyc")
+app.include_router(transactions_router, prefix="/api/transactions")
+app.include_router(budgets_router, prefix="/api/budgets")
+app.include_router(user_dashboard_router, prefix="/api/user-dashboard")
 
-# Admin routes
+# Admin routers (each has its own /admin/... prefix internally)
+app.include_router(dashboard_router)
 app.include_router(users_router)
 app.include_router(alerts_router)
-app.include_router(logs_router)
 app.include_router(settings_router)
-app.include_router(dashboard_router)
-
-# Accounts routes
-app.include_router(accounts_router, prefix="/api/accounts")
-
-# Transactions API (uses header based auth for now - send `Authorization: Bearer <user_id>` or `X-User-Id`)
-from src.users.transactions import router as transactions_router
-app.include_router(transactions_router, prefix="/api/transactions")
-
-# Public endpoint to fetch all transactions (for frontend / direct calls)
-from fastapi import Depends
-from sqlalchemy.orm import Session
-from src.database.core import SessionLocal
-from src.models.user import Transaction
+app.include_router(logs_router)
 
 
 def get_db():
@@ -76,19 +145,3 @@ def get_transactions(db: Session = Depends(get_db)):
             "created_at": t.created_at.isoformat() if getattr(t, 'created_at', None) else None
         })
     return result
-
-
-# Health check endpoint
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "message": "Digital Banking API is running"}
-
-
-@app.get("/")
-async def root():
-    return {
-        "name": "Digital Banking API",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "health": "/health"
-    }

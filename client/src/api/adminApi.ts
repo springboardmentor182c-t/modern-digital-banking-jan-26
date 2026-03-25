@@ -49,20 +49,45 @@ async function apiFetch<T>(
   }
 }
 
+// Helper for downloading CSVs
+export async function exportCsv(endpoint: string, filename: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('admin_token');
+        window.location.href = '/admin-login';
+      }
+      return false;
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    return true;
+  } catch (error) {
+    console.error('CSV Export Error:', error);
+    return false;
+  }
+}
+
 // Authentication APIs
 export const authApi = {
   login: async (email: string, password: string) => {
-    const formData = new URLSearchParams();
-    formData.append('username', email);
-    formData.append('password', password);
-
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/auth/token`, {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -74,10 +99,14 @@ export const authApi = {
       }
 
       const data = await response.json();
-      if (data.access_token) {
-        localStorage.setItem('admin_token', data.access_token);
+      // Store admin info for getCurrentUser fallback
+      if (data.admin_id) {
+        localStorage.setItem('admin_info', JSON.stringify({ id: data.admin_id, email, name: email, role: data.role }));
       }
-      return { data };
+      // Store a token placeholder so auth state persists
+      localStorage.setItem('admin_token', data.admin_id || 'authenticated');
+      // Return data shaped as access_token so AuthContext proceeds
+      return { data: { access_token: data.admin_id || 'authenticated', ...data } };
     } catch (error) {
       console.error('Login error:', error);
       return { data: null, error: 'Cannot connect to server. Please ensure the backend is running at ' + API_BASE_URL };
@@ -90,7 +119,16 @@ export const authApi = {
   },
 
   getCurrentUser: async () => {
-    return apiFetch<{ id: number; email: string; name: string }>('/admin/auth/me');
+    // Use cached admin info from localStorage (no dedicated /me endpoint on backend)
+    const cached = localStorage.getItem('admin_info');
+    if (cached) {
+      try {
+        return { data: JSON.parse(cached) as { id: number; email: string; name: string } };
+      } catch {
+        // fall through
+      }
+    }
+    return { data: null as unknown as { id: number; email: string; name: string }, error: 'Not authenticated' };
   },
 };
 
@@ -193,10 +231,10 @@ export const alertsApi = {
     if (typeFilter && typeFilter !== 'all') params.append('type_filter', typeFilter);
     if (severityFilter && severityFilter !== 'all') params.append('severity_filter', severityFilter);
     if (statusFilter && statusFilter !== 'all') params.append('status_filter', statusFilter);
-    
+
     const queryString = params.toString();
     if (queryString) endpoint += `?${queryString}`;
-    
+
     return apiFetch<{
       alerts: Array<{
         id: number;
