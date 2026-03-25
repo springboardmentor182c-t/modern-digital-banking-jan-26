@@ -11,9 +11,13 @@ import { Plus, TrendingUp, TrendingDown, Edit2, Trash2, Download } from 'lucide-
 import api from '@/services/api';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { toast } from 'sonner';
-import { useAuth } from '@/context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+/** Read the user JWT stored by the Login page. */
+function getUserToken(): string | null {
+  return localStorage.getItem('access_token');
+}
 
 interface Budget {
   id: string;
@@ -25,18 +29,19 @@ interface Budget {
 }
 
 export function Budgets() {
-  const { token } = useAuth();
+  const [token, setToken] = useState<string | null>(getUserToken());
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
-  const [spendingByCategory, setSpendingByCategory] = useState<Array<{ name: string; value: number; fill: string }>>([]);
-  const [monthlyData, setMonthlyData] = useState<Array<{ month: string; spent: number }>>([]);
+  const [apiSpending, setApiSpending] = useState<Array<{ name: string; value: number; fill: string }> | null>(null);
+  const [apiTrends, setApiTrends] = useState<Array<{ month: string; spent: number }> | null>(null);
 
   const fetchBudgets = async () => {
-    if (!token) return;
+    const currentToken = getUserToken();
+    if (!currentToken) return;
     try {
       setLoading(true);
       const res = await fetch(`${API_URL}/api/budgets/`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${currentToken}` }
       });
       if (res.ok) {
         const data = await res.json();
@@ -65,18 +70,64 @@ export function Budgets() {
   const [limit, setLimit] = useState('');
   const [spent, setSpent] = useState('0');
 
+  const CATEGORY_COLORS: Record<string, string> = {
+    'Food & Dining': '#ff6384',
+    'Shopping': '#36a2eb',
+    'Transportation': '#ffce56',
+    'Bills & Utilities': '#4bc0c0',
+    'Entertainment': '#9966ff',
+    'Healthcare': '#ff9f40',
+    'Travel': '#c9cbcf',
+    'Groceries': '#7bc043',
+    'Education': '#f37735',
+    'Personal Care': '#d11141',
+    'Savings': '#00aedb',
+    'Other': '#999999',
+  };
+
+  /** Derive pie-chart data from budgets when dashboard API has no transaction-based data */
+  const deriveSpendingFromBudgets = (budgetList: Budget[]) => {
+    return budgetList
+      .filter(b => b.spent > 0)
+      .map(b => ({
+        name: b.category,
+        value: b.spent,
+        fill: CATEGORY_COLORS[b.category] || '#0066ff',
+      }));
+  };
+
+  /** Derive a simple bar-chart entry from budgets when no monthly transaction data */
+  const deriveTrendsFromBudgets = (budgetList: Budget[]) => {
+    const tSpent = budgetList.reduce((sum, b) => sum + b.spent, 0);
+    if (tSpent <= 0) return [];
+    const currentMonth = new Date().toLocaleString('default', { month: 'short' });
+    return [{ month: currentMonth, spent: tSpent }];
+  };
+
+  // Final charting data: pick API data if it has items, otherwise fallback to local budgets data
+  const spendingByCategory = (apiSpending && apiSpending.length > 0) 
+    ? apiSpending 
+    : deriveSpendingFromBudgets(budgets);
+
+  const monthlyData = (apiTrends && apiTrends.length > 0)
+    ? apiTrends
+    : deriveTrendsFromBudgets(budgets);
+
   useEffect(() => {
+    setToken(getUserToken());
     fetchBudgets();
     fetchDashboardData();
-  }, [token]);
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
       const data = await api.getUserDashboard();
-      setSpendingByCategory(data.spendingByCategory || []);
-      setMonthlyData(data.monthlySpending || []);
+      setApiSpending(data.spendingByCategory || []);
+      setApiTrends(data.monthlySpending || []);
     } catch (error) {
       console.error('Failed to load spending data:', error);
+      setApiSpending([]);
+      setApiTrends([]);
     }
   };
 
@@ -116,11 +167,12 @@ export function Budgets() {
     }
 
     try {
+      const currentToken = getUserToken();
       const res = await fetch(`${API_URL}/api/budgets/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${currentToken}`
         },
         body: JSON.stringify({
           category,
@@ -160,11 +212,12 @@ export function Budgets() {
     }
 
     try {
+      const currentToken = getUserToken();
       const res = await fetch(`${API_URL}/api/budgets/${selectedBudget.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${currentToken}`
         },
         body: JSON.stringify({
           limit: limitNum,
@@ -193,10 +246,11 @@ export function Budgets() {
     if (!selectedBudget) return;
 
     try {
+      const currentToken = getUserToken();
       const res = await fetch(`${API_URL}/api/budgets/${selectedBudget.id}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${currentToken}`
         }
       });
       if (res.ok) {
@@ -227,11 +281,12 @@ export function Budgets() {
   };
 
   const handleExportCSV = async () => {
-    if (!token) return;
+    const currentToken = getUserToken();
+    if (!currentToken) return;
     toast.info('Downloading CSV...');
     try {
       const res = await fetch(`${API_URL}/api/budgets/export-csv`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${currentToken}` }
       });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
@@ -250,11 +305,12 @@ export function Budgets() {
   };
 
   const handleExportPDF = async () => {
-    if (!token) return;
+    const currentToken = getUserToken();
+    if (!currentToken) return;
     toast.info('Downloading PDF...');
     try {
       const res = await fetch(`${API_URL}/api/budgets/export-pdf`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${currentToken}` }
       });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();

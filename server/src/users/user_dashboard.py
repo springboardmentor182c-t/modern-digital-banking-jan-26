@@ -130,6 +130,18 @@ def get_user_dashboard_summary(
         for row in spending_rows
     ]
 
+    # Fallback: derive from budget spent values when no transactions exist
+    if not spending_by_category and budgets_raw:
+        spending_by_category = [
+            {
+                "name": b.category,
+                "value": float(b.spent) if b.spent else 0,
+                "fill": CATEGORY_COLORS.get(b.category, "#999999"),
+            }
+            for b in budgets_raw
+            if b.spent and float(b.spent) > 0
+        ]
+
     # ── Cash flow data (monthly income vs expenses, last 7 months) ─
     today = datetime.utcnow().date()
     seven_months_ago = today.replace(day=1) - timedelta(days=180)
@@ -200,6 +212,15 @@ def get_user_dashboard_summary(
         }
         for row in monthly_spending_rows
     ]
+
+    # Fallback: derive from budget spent values when no transactions exist
+    if not monthly_spending and budgets_raw:
+        total_budget_spent = sum(float(b.spent) for b in budgets_raw if b.spent)
+        if total_budget_spent > 0:
+            monthly_spending = [{
+                "month": month_names[today.month - 1],
+                "spent": total_budget_spent,
+            }]
 
     # ── Rewards (derived from total debit transaction spend) ─────
     total_spend_row = (

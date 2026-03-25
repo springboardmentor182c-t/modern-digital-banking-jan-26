@@ -240,7 +240,7 @@ cd server
 source venv/bin/activate
 
 # Run with uvicorn
-cd 
+uvicorn src.main:app --host 0.0.0.0 --port 8000
 ```
 
 The API will be available at: **http://localhost:8000**

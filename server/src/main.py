@@ -44,37 +44,51 @@ def seed_settings():
         db.close()
 
 def seed_budgets():
+    import logging
+    logger = logging.getLogger(__name__)
     db = SessionLocal()
     try:
         from src.models.user import Budget, User
-        if db.query(Budget).count() < 10:
-            # First, check if there's any user to attach budgets to
-            first_user = db.query(User).first()
-            if first_user:
-                seeds = [
-                    {"category": "Food & Dining", "limit": 5000, "spent": 1200, "icon": "food-&-dining"},
-                    {"category": "Shopping", "limit": 4000, "spent": 3800, "icon": "shopping"}, # At Risk
-                    {"category": "Transportation", "limit": 2500, "spent": 800, "icon": "transportation"},
-                    {"category": "Bills & Utilities", "limit": 8000, "spent": 8500, "icon": "bills-&-utilities"}, # Exceeded
-                    {"category": "Entertainment", "limit": 3000, "spent": 2900, "icon": "entertainment"},
-                    {"category": "Healthcare", "limit": 10000, "spent": 1000, "icon": "healthcare"},
-                    {"category": "Travel", "limit": 15000, "spent": 0, "icon": "travel"},
-                    {"category": "Groceries", "limit": 6000, "spent": 4500, "icon": "groceries"},
-                    {"category": "Education", "limit": 5000, "spent": 1500, "icon": "education"},
-                    {"category": "Personal Care", "limit": 2000, "spent": 1900, "icon": "personal-care"},
-                ]
-                for seed in seeds:
-                    if not db.query(Budget).filter_by(user_id=first_user.id, category=seed["category"]).first():
-                        db.add(Budget(
-                            user_id=first_user.id,
-                            category=seed["category"],
-                            limit=seed["limit"],
-                            spent=seed["spent"],
-                            icon=seed["icon"]
-                        ))
-                db.commit()
-    except Exception:
-        pass
+        users = db.query(User).all()
+        if not users:
+            logger.info("seed_budgets: No users in DB yet — skipping budget seeding.")
+            return
+
+        seeds = [
+            {"category": "Food & Dining",     "limit": 5000,  "spent": 3200,  "icon": "food-&-dining"},
+            {"category": "Shopping",           "limit": 4000,  "spent": 3800,  "icon": "shopping"},
+            {"category": "Transportation",     "limit": 2500,  "spent": 800,   "icon": "transportation"},
+            {"category": "Bills & Utilities",  "limit": 8000,  "spent": 8500,  "icon": "bills-&-utilities"},
+            {"category": "Entertainment",      "limit": 3000,  "spent": 2900,  "icon": "entertainment"},
+            {"category": "Healthcare",         "limit": 10000, "spent": 1500,  "icon": "healthcare"},
+            {"category": "Travel",             "limit": 15000, "spent": 4200,  "icon": "travel"},
+            {"category": "Groceries",          "limit": 6000,  "spent": 4500,  "icon": "groceries"},
+            {"category": "Education",          "limit": 5000,  "spent": 1500,  "icon": "education"},
+            {"category": "Personal Care",      "limit": 2000,  "spent": 1900,  "icon": "personal-care"},
+        ]
+
+        for user in users:
+            existing = db.query(Budget).filter_by(user_id=user.id).count()
+            if existing >= 10:
+                logger.info(f"seed_budgets: User {user.id} already has {existing} budgets — skipping.")
+                continue
+
+            added = 0
+            for seed in seeds:
+                if not db.query(Budget).filter_by(user_id=user.id, category=seed["category"]).first():
+                    db.add(Budget(
+                        user_id=user.id,
+                        category=seed["category"],
+                        limit=seed["limit"],
+                        spent=seed["spent"],
+                        icon=seed["icon"]
+                    ))
+                    added += 1
+            db.commit()
+            logger.info(f"seed_budgets: Seeded {added} budgets for user {user.id} ({user.email})")
+    except Exception as e:
+        logger.error(f"seed_budgets failed: {e}")
+        db.rollback()
     finally:
         db.close()
 
