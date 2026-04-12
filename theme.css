@@ -1,0 +1,140 @@
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: Segoe UI, sans-serif;
+}
+
+body {
+background: #f4f6f9;
+}
+
+/* Layout */
+.container {
+display: flex;
+height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+width: 260px;
+background: #0f172a;
+color: white;
+padding: 20px;
+}
+
+.sidebar h2 {
+text-align: center;
+margin-bottom: 20px;
+}
+
+.user-profile {
+text-align: center;
+margin-bottom: 20px;
+}
+
+.user-profile img {
+border-radius: 50%;
+}
+
+.sidebar ul {
+list-style: none;
+}
+
+.sidebar ul li {
+padding: 12px;
+margin: 8px 0;
+border-radius: 8px;
+cursor: pointer;
+}
+
+.sidebar ul li:hover, .active {
+background: #1e40af;
+}
+
+/* Main */
+.main {
+flex: 1;
+padding: 20px;
+overflow-y: auto;
+}
+
+/* Topbar */
+.topbar {
+display: flex;
+align-items: center;
+gap: 15px;
+margin-bottom: 20px;
+}
+
+.topbar input {
+padding: 8px;
+border-radius: 6px;
+border: 1px solid #ccc;
+flex: 1;
+}
+
+.icons img {
+border-radius: 50%;
+}
+
+/* Cards */
+.cards {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 15px;
+}
+
+.card {
+background: white;
+padding: 15px;
+border-radius: 10px;
+box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.card p {
+font-size: 18px;
+font-weight: bold;
+}
+
+/* Boxes */
+.box {
+background: white;
+padding: 15px;
+margin-top: 20px;
+border-radius: 10px;
+box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Alerts */
+.alert {
+background: #e0f2fe;
+padding: 8px;
+border-radius: 6px;
+margin: 6px 0;
+}
+
+/* Table */
+table {
+width: 100%;
+border-collapse: collapse;
+}
+
+table th, td {
+padding: 10px;
+border-bottom: 1px solid #ddd;
+}
+
+/* Donut Chart (Fake UI only) */
+.donut {
+width: 150px;
+height: 150px;
+border-radius: 50%;
+background: conic-gradient(#22c55e 0% 25%, #f97316 25% 45%, #ef4444 45% 65%, #3b82f6 65% 80%, #a855f7 80% 100%);
+margin: 10px auto;
+}
+
+.spend-list {
+list-style: none;
+text-align: center;
+}
