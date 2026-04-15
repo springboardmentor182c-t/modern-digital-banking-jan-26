@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SmartBank User Dashboard</title>
+<link rel="stylesheet" href="theme.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>🏦 SmartBank</h2>
+
+    <div class="user-profile">
+        <img src="https://i.pravatar.cc/60" />
+        <h4>John Doe</h4>
+        <p>john@example.com</p>
+    </div>
+
+    <ul>
+        <li class="active"><i class="fa fa-home"></i> Dashboard</li>
+        <li><i class="fa fa-wallet"></i> Accounts</li>
+        <li><i class="fa fa-exchange"></i> Transactions</li>
+        <li><i class="fa fa-chart-pie"></i> Budgets</li>
+        <li><i class="fa fa-bell"></i> Bills & Reminders</li>
+        <li><i class="fa fa-gift"></i> Rewards</li>
+        <li><i class="fa fa-cog"></i> Settings</li>
+        <li><i class="fa fa-sign-out-alt"></i> Logout</li>
+    </ul>
+</div>
+
+<!-- MAIN DASHBOARD -->
+<div class="main">
+
+<div class="topbar">
+    <h2>Dashboard</h2>
+    <input type="text" placeholder="Search transactions...">
+    <div class="icons">
+        <i class="fa fa-bell"></i>
+        <img src="https://i.pravatar.cc/40">
+    </div>
+</div>
+
+<!-- ACCOUNT OVERVIEW -->
+<div class="cards">
+    <div class="card">
+        <h4>Savings</h4>
+        <p>₹24,750.50</p>
+    </div>
+    <div class="card">
+        <h4>Checking</h4>
+        <p>₹8,420.25</p>
+    </div>
+    <div class="card">
+        <h4>Credit Card</h4>
+        <p>-₹2,150.00</p>
+    </div>
+    <div class="card">
+        <h4>Investment</h4>
+        <p>₹45,620.75</p>
+    </div>
+</div>
+
+<!-- SPENDING BREAKDOWN -->
+<div class="box">
+<h3>Spending Breakdown</h3>
+<div class="donut"></div>
+<ul class="spend-list">
+<li>Groceries ₹456</li>
+<li>Dining ₹285</li>
+<li>Shopping ₹320</li>
+<li>Transport ₹145</li>
+<li>Entertainment ₹90</li>
+<li>Bills ₹680</li>
+</ul>
+</div>
+
+<!-- ALERTS -->
+<div class="box">
+<h3>Alerts</h3>
+<p class="alert">⚠ Dining budget almost reached (95%)</p>
+<p class="alert">💡 Electric bill due in 4 days</p>
+<p class="alert">✅ Salary credited</p>
+</div>
+
+<!-- RECENT TRANSACTIONS -->
+<div class="box">
+<h3>Recent Transactions</h3>
+<table>
+<tr><th>Name</th><th>Category</th><th>Amount</th></tr>
+<tr><td>Starbucks</td><td>Food</td><td>-₹75</td></tr>
+<tr><td>Salary</td><td>Income</td><td>+₹5200</td></tr>
+<tr><td>Amazon</td><td>Shopping</td><td>-₹899</td></tr>
+</table>
+</div>
+
+</div>
+</div>
+
+</body>
+</html>
