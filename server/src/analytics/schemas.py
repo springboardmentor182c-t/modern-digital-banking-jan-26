@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 from src.analytics.models import AlertType
 from datetime import datetime
 
@@ -12,3 +13,12 @@ class AlertResponse(AlertBase):
     created_at: datetime
     class Config:
         from_attributes = True
+
+class DailyForecast(BaseModel):
+    date: str
+    income: float
+    expense: float
+
+class PredictCashFlowResponse(BaseModel):
+    predicted_balance: List[float]
+    daily_forecast: List[DailyForecast]

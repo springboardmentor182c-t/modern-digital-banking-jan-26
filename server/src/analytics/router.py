@@ -6,7 +6,8 @@ from src.database import get_db
 from src.auth.router import get_current_user
 from src.auth.models import User
 from src.analytics.models import Alert
-from src.analytics.schemas import AlertResponse
+from src.analytics.schemas import AlertResponse, PredictCashFlowResponse
+from src.analytics.service import predict_cash_flow
 
 router = APIRouter()
 
@@ -86,3 +87,10 @@ async def get_admin_logs(
     from src.analytics.models import AdminLog
     result = await db.execute(select(AdminLog).order_by(AdminLog.timestamp.desc()))
     return result.scalars().all()
+
+@router.get("/predict-cashflow", response_model=PredictCashFlowResponse)
+async def get_predicted_cash_flow(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    return await predict_cash_flow(current_user.id, db)
