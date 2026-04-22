@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTransactions } from '../context/TransactionsContext';
 import { useAccounts } from '../../accounts';
 import api from '../../../api/axios';
@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { formatCurrency, formatDate, cn } from '../../../lib/utils';
-import { Plus, ArrowUpRight, ArrowDownRight, Filter, Download, Search, MoreHorizontal, Edit, Trash } from 'lucide-react';
+import { Plus, ArrowUpRight, ArrowDownRight, Filter, Download, Upload, Search, MoreHorizontal, Edit, Trash } from 'lucide-react';
 import { useBudgets } from '../../budgets/context/BudgetsContext';
 
 export default function Transactions() {
@@ -18,6 +18,12 @@ export default function Transactions() {
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importAccountId, setImportAccountId] = useState('');
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     account_id: '',
@@ -42,6 +48,32 @@ export default function Transactions() {
       refreshTransactions();
     } catch (error) {
       console.error("Failed to save transaction", error);
+    }
+  };
+
+  const handleImportSubmit = async (e) => {
+    e.preventDefault();
+    if (!importFile || !importAccountId) return;
+    
+    setImporting(true);
+    const formData = new FormData();
+    formData.append('file', importFile);
+    formData.append('account_id', importAccountId);
+    
+    try {
+      await api.post('/transactions/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setShowImportModal(false);
+      setImportFile(null);
+      setImportAccountId('');
+      refreshTransactions();
+      alert('Transactions imported successfully!');
+    } catch (error) {
+      console.error("Failed to import transactions", error);
+      alert('Failed to import transactions. Please check the CSV format.');
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -86,6 +118,10 @@ export default function Transactions() {
           <p className="text-muted-foreground mt-1">Monitor your spending and income across all accounts</p>
         </div>
         <div className="flex gap-3">
+          <Button variant="outline" className="hidden sm:flex" onClick={() => setShowImportModal(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Import
+          </Button>
           <Button variant="outline" className="hidden sm:flex">
             <Download className="h-4 w-4 mr-2" />
             Export
@@ -326,6 +362,69 @@ export default function Transactions() {
               <CardFooter className="flex justify-end gap-3">
                 <Button variant="ghost" type="button" onClick={() => { setShowModal(false); setEditingId(null); }}>Cancel</Button>
                 <Button type="submit">{editingId ? "Save Changes" : "Add Transaction"}</Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowImportModal(false)} />
+          <Card className="w-full max-w-md relative z-10 shadow-2xl animate-in zoom-in-95 duration-200">
+            <CardHeader>
+              <CardTitle>Import Transactions</CardTitle>
+              <CardDescription>Upload a CSV file to bulk import transactions.</CardDescription>
+            </CardHeader>
+            <form onSubmit={handleImportSubmit}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Account</label>
+                  <select
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
+                    value={importAccountId}
+                    onChange={(e) => setImportAccountId(e.target.value)}
+                  >
+                    <option value="">Select Account</option>
+                    {accounts.map(acc => (
+                      <option key={acc.id} value={acc.id}>{acc.bank_name} - {acc.masked_account}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">CSV File</label>
+                  <div className="flex items-center gap-3">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Browse Files
+                    </Button>
+                    <span className="text-sm text-muted-foreground truncate max-w-[200px]">
+                      {importFile ? importFile.name : "No file selected"}
+                    </span>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setImportFile(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Expected columns: Date, Description, Category, Amount, Type, Merchant</p>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end gap-3">
+                <Button variant="ghost" type="button" onClick={() => setShowImportModal(false)} disabled={importing}>Cancel</Button>
+                <Button type="submit" disabled={importing}>
+                  {importing ? "Importing..." : "Import"}
+                </Button>
               </CardFooter>
             </form>
           </Card>

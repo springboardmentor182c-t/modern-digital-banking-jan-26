@@ -1,7 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List
+import csv
+import io
+from datetime import datetime
+
 from src.database import get_db
 from src.auth.router import get_current_user
 from src.auth.models import User
@@ -134,3 +138,71 @@ async def get_transactions(
         .limit(5)
     )
     return result.scalars().all()
+
+@router.post("/import")
+async def import_transactions(
+    account_id: int = Form(...),
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed.")
+    
+    # Verify account belongs to user
+    result = await db.execute(
+        select(Account).filter(Account.id == account_id, Account.user_id == current_user.id)
+    )
+    account = result.scalars().first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    content = await file.read()
+    decoded = content.decode('utf-8')
+    reader = csv.DictReader(io.StringIO(decoded))
+    
+    imported_count = 0
+    # Expected columns: Date, Description, Category, Amount, Type, Merchant
+    # Mapping to db model: txn_date, description, category, amount, txn_type, merchant
+    for row in reader:
+        # Standardize headers by stripping whitespace and lowercasing
+        clean_row = {k.strip().lower(): v.strip() for k, v in row.items()}
+        
+        try:
+            date_val = clean_row.get('date')
+            try:
+                txn_date = datetime.fromisoformat(date_val) if date_val else datetime.utcnow()
+            except ValueError:
+                # fallback for other formats if any, or just utcnow
+                txn_date = datetime.utcnow()
+
+            amount_val = float(clean_row.get('amount', 0))
+            txn_type_str = clean_row.get('type', 'debit').lower()
+            
+            if txn_type_str not in ['credit', 'debit']:
+                txn_type_str = 'debit'
+
+            new_txn = Transaction(
+                account_id=account.id,
+                description=clean_row.get('description', 'Imported Transaction'),
+                category=clean_row.get('category', 'Uncategorized'),
+                amount=amount_val,
+                currency='INR',
+                txn_type=TransactionType[txn_type_str],
+                merchant=clean_row.get('merchant', ''),
+                txn_date=txn_date
+            )
+            
+            if new_txn.txn_type == TransactionType.credit:
+                account.balance += new_txn.amount
+            else:
+                account.balance -= new_txn.amount
+                
+            db.add(new_txn)
+            imported_count += 1
+        except Exception as e:
+            # Skip invalid rows or log them
+            continue
+            
+    await db.commit()
+    return {"message": f"Successfully imported {imported_count} transactions"}

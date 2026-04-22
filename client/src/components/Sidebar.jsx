@@ -51,12 +51,12 @@ export default function Sidebar({ isOpen, onClose }) {
                 <div className="flex flex-col h-full w-full">
                     <div className="flex-1 flex flex-col pt-8 pb-4 overflow-y-auto">
                         <div className="flex items-center justify-between px-6 mb-8">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                                    <Wallet className="h-6 w-6 text-primary-foreground" />
+                            <Link to="/dashboard" onClick={onClose} className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer group">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-primary/40 group-hover:scale-110 transition-transform duration-300">
+                                    <Wallet className="h-6 w-6 text-white" />
                                 </div>
                                 <span className="text-xl font-bold tracking-tight text-foreground">NeoVault</span>
-                            </div>
+                            </Link>
                             <button
                                 onClick={onClose}
                                 className="md:hidden p-2 -mr-2 text-muted-foreground hover:bg-muted/50 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -74,10 +74,10 @@ export default function Sidebar({ isOpen, onClose }) {
                                         to={item.href}
                                         onClick={onClose}
                                         className={cn(
-                                            "group flex items-center px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200",
+                                            "group flex items-center px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-300",
                                             isActive
-                                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]"
-                                                : "text-muted-foreground hover:bg-muted hover:text-foreground hover:translate-x-1"
+                                                ? "bg-gradient-to-r from-primary to-purple-500 text-white shadow-lg shadow-primary/30 scale-[1.03]"
+                                                : "text-muted-foreground hover:bg-muted/80 hover:text-foreground hover:translate-x-1"
                                         )}
                                     >
                                         <item.icon

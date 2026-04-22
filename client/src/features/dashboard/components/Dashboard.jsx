@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAccounts } from '../../accounts';
 import { useTransactions } from '../../transactions';
 import { useBudgets } from '../../budgets';
@@ -18,6 +18,13 @@ export default function Dashboard() {
   const { budgets } = useBudgets();
   const { bills } = useBills();
   const { rewards } = useRewards();
+
+  const [animatingBudgets, setAnimatingBudgets] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimatingBudgets(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [aiSummary, setAiSummary] = useState(null);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
@@ -113,7 +120,11 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-12">
+    <div className="space-y-8 animate-in fade-in duration-700 pb-12 relative min-h-screen">
+      {/* Decorative Background Glows */}
+      <div className="absolute top-0 left-0 right-0 h-[600px] bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-primary/20 via-primary/5 to-background -z-10 opacity-80 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-success/10 via-transparent to-transparent -z-10 opacity-50 pointer-events-none" />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
@@ -190,63 +201,69 @@ export default function Dashboard() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="relative overflow-hidden group hover:border-primary/40 transition-all shadow-xl bg-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Total Net Worth</CardTitle>
+        <Card className="relative overflow-hidden group hover:border-primary/50 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/30 transition-all duration-500 shadow-2xl bg-card/40 backdrop-blur-xl border border-white/10 dark:border-white/5">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent z-0 opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="pb-2 relative z-10">
+            <CardTitle className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              <div className="p-1.5 rounded-md bg-gradient-to-br from-primary/30 to-primary/5"><Landmark className="h-3.5 w-3.5 text-primary" /></div>
+              Total Net Worth
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold tracking-tighter transition-transform group-hover:scale-[1.02] duration-300">
+          <CardContent className="relative z-10">
+            <div className="text-4xl md:text-5xl font-black tracking-tighter transition-transform group-hover:scale-[1.02] duration-500 bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60">
               {formatCurrency(totalBalance)}
             </div>
-            <div className="flex items-center gap-1.5 mt-3 text-success font-medium">
-              <div className="p-1 rounded-full bg-success/10">
-                <TrendingUp className="h-3.5 w-3.5" />
-              </div>
-              <span className="text-sm">4.2% increase since last month</span>
+            <div className="flex items-center gap-2 mt-4 text-success font-medium bg-success/10 w-fit px-2.5 py-1 rounded-full border border-success/20">
+              <TrendingUp className="h-3.5 w-3.5" />
+              <span className="text-xs font-bold tracking-wide">4.2% top up</span>
             </div>
           </CardContent>
-          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 group-hover:bg-primary/10 transition-colors" />
+          <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors duration-500 pointer-events-none" />
         </Card>
 
-        <Card className="relative overflow-hidden group hover:border-destructive/40 transition-all shadow-xl bg-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Expenses (Current Month)</CardTitle>
+        <Card className="relative overflow-hidden group hover:border-destructive/50 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl hover:shadow-destructive/30 transition-all duration-500 shadow-2xl bg-card/40 backdrop-blur-xl border border-white/10 dark:border-white/5">
+          <div className="absolute inset-0 bg-gradient-to-br from-destructive/10 to-transparent z-0 opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardHeader className="pb-2 relative z-10">
+            <CardTitle className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              <div className="p-1.5 rounded-md bg-destructive/10"><Banknote className="h-3.5 w-3.5 text-destructive" /></div>
+              Monthly Expenses
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold tracking-tighter transition-transform group-hover:scale-[1.02] duration-300">
+          <CardContent className="relative z-10">
+            <div className="text-4xl md:text-5xl font-black tracking-tighter transition-transform group-hover:scale-[1.02] duration-500">
               {formatCurrency(monthlySpending)}
             </div>
-            <div className="flex items-center gap-1.5 mt-3 text-destructive font-medium">
-              <div className="p-1 rounded-full bg-destructive/10">
-                <ArrowDownRight className="h-3.5 w-3.5" />
-              </div>
-              <span className="text-sm">Ahead of budget by 12,000</span>
+            <div className="flex items-center gap-2 mt-4 text-warning font-medium bg-warning/10 w-fit px-2.5 py-1 rounded-full border border-warning/20">
+              <ArrowDownRight className="h-3.5 w-3.5" />
+              <span className="text-xs font-bold tracking-wide">On Track</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden group bg-gradient-to-br from-primary to-primary-foreground border-none shadow-2xl shadow-primary/20 text-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-bold text-white/60 uppercase tracking-widest">Available Rewards</CardTitle>
+        <Card className="relative overflow-hidden group bg-gradient-to-br from-violet-600 via-fuchsia-600 to-indigo-600 border-none shadow-xl shadow-primary/40 text-white transition-all duration-500 hover:-translate-y-2 hover:scale-[1.03] hover:shadow-2xl hover:shadow-primary/60">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.05] mix-blend-overlay" />
+          <CardHeader className="pb-2 relative z-10">
+            <CardTitle className="flex items-center gap-2 text-xs font-bold text-white/80 uppercase tracking-widest">
+              <div className="p-1.5 rounded-md bg-white/20 backdrop-blur-md"><Gift className="h-3.5 w-3.5 text-white" /></div>
+              Available Rewards
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold tracking-tighter flex items-center gap-2 group-hover:scale-[1.02] duration-300">
+          <CardContent className="relative z-10">
+            <div className="text-5xl font-black tracking-tighter flex items-center gap-2 group-hover:scale-[1.03] duration-500 drop-shadow-md cursor-default">
               {rewardPoints.toLocaleString()}
-              <Sparkles className="h-6 w-6 text-warning fill-warning" />
+              <Sparkles className="h-7 w-7 text-warning fill-warning drop-shadow-[0_0_15px_rgba(250,204,21,0.8)] animate-pulse" />
             </div>
-            <div className="flex items-center gap-1.5 mt-3 text-white/90 font-medium">
-              <div className="p-1 rounded-full bg-white/10">
-                <Gift className="h-3.5 w-3.5" />
-              </div>
-              <span className="text-sm">Points worth ₹{(rewardPoints / 10).toFixed(0)} in vouchers</span>
+            <div className="flex items-center gap-2 mt-4 text-primary-foreground font-medium bg-white/10 w-fit px-3 py-1 rounded-full border border-white/20 backdrop-blur-sm shadow-inner shadow-white/10">
+              <span className="text-xs font-bold tracking-wide">Value: ₹{(rewardPoints / 10).toFixed(0)}</span>
             </div>
           </CardContent>
+          <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/20 rounded-full blur-3xl pointer-events-none" />
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Spending Trends Chart */}
-        <Card className="border-border/50 shadow-xl">
+        <Card className="border-border/50 shadow-xl hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/40 transition-all duration-500">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
@@ -260,40 +277,43 @@ export default function Dashboard() {
                 <AreaChart data={spendingTrends}>
                   <defs>
                     <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.05} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--border)" opacity={0.4} />
                   <XAxis
                     dataKey="month"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 12, fontWeight: 500 }}
-                    dy={10}
+                    tick={{ fill: 'var(--muted-foreground)', fontSize: 13, fontWeight: 600 }}
+                    dy={15}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 12, fontWeight: 500 }}
+                    tick={{ fill: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600 }}
                     tickFormatter={(value) => `₹${value / 1000}k`}
+                    dx={-10}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: 'var(--card)',
+                      backgroundColor: 'rgba(var(--card), 0.95)',
+                      backdropFilter: 'blur(10px)',
                       border: '1px solid var(--border)',
                       borderRadius: '16px',
-                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+                      boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
                     }}
-                    itemStyle={{ color: 'var(--foreground)', fontWeight: 'bold' }}
+                    itemStyle={{ color: 'var(--primary)', fontWeight: '900', fontSize: '1.2rem' }}
                   />
                   <Area
                     type="monotone"
                     dataKey="amount"
                     stroke="var(--primary)"
-                    strokeWidth={3}
+                    strokeWidth={4}
                     fillOpacity={1}
                     fill="url(#colorAmount)"
+                    activeDot={{ r: 6, strokeWidth: 0, fill: "var(--primary)" }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -302,7 +322,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Budget Progress */}
-        <Card className="border-border/50 shadow-xl">
+        <Card className="border-border/50 shadow-xl hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/40 transition-all duration-500">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
@@ -324,10 +344,11 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <Progress
-                  value={budget.percentage}
+                  value={animatingBudgets ? 100 : budget.percentage}
                   className="h-2.5 rounded-full bg-muted/50"
                   indicatorClassName={cn(
-                    budget.percentage > 90 ? "bg-destructive" : budget.percentage > 70 ? "bg-warning" : "bg-primary"
+                    "transition-transform duration-[1500ms] ease-out",
+                    budget.percentage > 90 ? "bg-destructive" : budget.percentage > 70 ? "bg-warning" : "bg-gradient-to-r from-primary to-purple-400"
                   )}
                 />
               </div>
@@ -343,7 +364,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
         {/* Linked Accounts */}
-        <Card className="border-border/50 shadow-xl">
+        <Card className="border-border/50 shadow-xl hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/40 transition-all duration-500">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
               <CardTitle>Linked Accounts</CardTitle>
@@ -355,10 +376,10 @@ export default function Dashboard() {
             {accounts?.map((account) => (
               <div
                 key={account.id}
-                className="flex items-center justify-between p-4 rounded-2xl bg-muted/20 hover:bg-muted/50 transition-all cursor-pointer group border border-transparent hover:border-primary/20"
+                className="flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                     {getAccountIcon(account.account_type)}
                   </div>
                   <div>
@@ -378,7 +399,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Recent Transactions */}
-        <Card className="border-border/50 shadow-xl">
+        <Card className="border-border/50 shadow-xl hover:-translate-y-2 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/40 transition-all duration-500">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
               <CardTitle>Recent Activity</CardTitle>
