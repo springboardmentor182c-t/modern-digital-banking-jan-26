@@ -22,6 +22,7 @@ jobs:
           script: |
             set -e # Stop script on any error
             BRANCH_NAME="${{ github.ref_name }}"
+            REPO_DIR="$HOME/modern-digital-banking-jan-26"
             
             # Setup Swap space to prevent Out Of Memory errors during Docker React Build on 1GB instances
             if [ ! -f /swapfile ]; then
@@ -31,38 +32,35 @@ jobs:
               sudo swapon /swapfile
             fi
             
-            # Navigate to the target directory (or clone if it doesn't exist)
-            if [ ! -d "modern-digital-banking-jan-26" ]; then
-              git clone https://github.com/${{ github.repository }}.git modern-digital-banking-jan-26
-            fi
-            
-            cd modern-digital-banking-jan-26
-            
-            # Fetch and pull the latest changes
-            git fetch origin
-            git checkout "$BRANCH_NAME"
-            git pull origin "$BRANCH_NAME"
-            
-            # Export secrets as environment variables before building/running
-            export GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
-            
-            # Print disk space before cleanup
+            echo "Disk space before cleanup:"
             df -h
             
-            # Aggressive System Cleanup
+            # Stop the current stack before cleanup so old images and containers can be reclaimed.
+            if [ -d "$REPO_DIR" ]; then
+              cd "$REPO_DIR"
+              docker compose -f docker-compose.prod.yml down || true
+              cd "$HOME"
+            fi
+            
+            # Aggressive system cleanup before touching git so the fetch has room to succeed.
             sudo journalctl --vacuum-size=50M || true
             sudo apt-get clean || true
             sudo rm -rf /var/lib/apt/lists/* || true
+            docker system prune -af || true
+            docker builder prune -af || true
+            docker image prune -af || true
             
-            # Build and restart containers using Docker Compose
-            docker compose -f docker-compose.prod.yml down || true
-            
-            # Cleanup unused docker images and volumes to save space BEFORE building
-            docker system prune -a --volumes -f
-            docker builder prune -af
-            
-            # Print disk space after cleanup
+            echo "Disk space after cleanup:"
             df -h
+            
+            # Fresh shallow clone keeps the deployment footprint smaller on low-disk instances.
+            rm -rf "$REPO_DIR"
+            git clone --depth 1 --branch "$BRANCH_NAME" https://github.com/${{ github.repository }}.git "$REPO_DIR"
+            
+            cd "$REPO_DIR"
+            
+            # Export secrets as environment variables before building/running
+            export GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
             
             docker compose -f docker-compose.prod.yml build
             docker compose -f docker-compose.prod.yml up -d
