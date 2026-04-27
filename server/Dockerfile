@@ -14,6 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY . .
 
-# Run database migrations (will wait for DB in docker-compose)
-# Using CMD instead of RUN so it executes at runtime and can access the DB network
-CMD alembic upgrade head && python create_admin.py && python seed_data_v2.py && uvicorn src.main:app --host 0.0.0.0 --port 8000
+CMD python wait_for_db.py && alembic upgrade head && python create_admin.py && python seed_data_v2.py && uvicorn src.main:app --host 0.0.0.0 --port 8000
