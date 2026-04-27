@@ -46,9 +46,10 @@ jobs:
             sudo journalctl --vacuum-size=50M || true
             sudo apt-get clean || true
             sudo rm -rf /var/lib/apt/lists/* || true
-            docker system prune -af || true
+            docker image rm modern-digital-banking-jan-26-client:latest modern-digital-banking-jan-26-server:latest || true
+            docker system prune -f || true
             docker builder prune -af || true
-            docker image prune -af || true
+            docker image prune -f || true
             
             echo "Disk space after cleanup:"
             df -h
