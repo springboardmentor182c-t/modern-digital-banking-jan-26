@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { Progress } from '../../../components/ui/progress';
+import api from '../../../api/axios';
 import {
     Users,
     ShieldCheck,
@@ -28,14 +29,11 @@ const mockPerformanceData = [
 ];
 
 export default function AdminDashboard() {
-    // --- CONNECTING TO BACKEND (Step 1) ---
     const [stats, setStats] = useState({ usd_rate: 0, eur_rate: 0, total_liquidity: "0" });
 
     useEffect(() => {
-        // This 'fetches' the data from the backend main.py file
-        fetch('http://localhost:8000/api/admin/currency-stats')
-            .then(res => res.json())
-            .then(data => setStats(data))
+        api.get('/admin/currency-stats')
+            .then(({ data }) => setStats(data))
             .catch(err => console.error("Error fetching live rates:", err));
     }, []);
 

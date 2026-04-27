@@ -4,8 +4,8 @@ import api from '../../../api/axios';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
-import { formatCurrency, formatDate, cn } from '../../../lib/utils';
-import { Plus, Calendar, AlertCircle, CheckCircle2, MoreVertical, CreditCard, ExternalLink, SwitchCamera } from 'lucide-react';
+import { formatCurrency, formatDate } from '../../../lib/utils';
+import { Plus, Calendar, MoreVertical, SwitchCamera } from 'lucide-react';
 
 export default function Bills() {
   const { bills, refreshBills } = useBills();
@@ -24,7 +24,7 @@ export default function Bills() {
       await api.post('/bills', formData);
       setShowModal(false);
       setFormData({ biller_name: '', due_date: '', amount_due: '', status: 'upcoming', auto_pay: false });
-      refreshData();
+      await refreshBills();
     } catch (error) {
       console.error("Failed to add bill", error);
     }

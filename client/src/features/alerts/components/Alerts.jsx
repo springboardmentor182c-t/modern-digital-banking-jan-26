@@ -1,23 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import api from '../../../api/axios';
 import { useAlerts } from '../context/AlertsContext';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
-import { Bell, AlertTriangle, Info, CheckCircle2, Search, Filter, Trash2, CheckCircle } from 'lucide-react';
-import { cn, formatDate, formatDateTime } from '../../../lib/utils';
+import { Bell, AlertTriangle, Info, CheckCircle2, Filter, Trash2, CheckCircle } from 'lucide-react';
+import { cn, formatDateTime } from '../../../lib/utils';
 import { Button } from '../../../components/ui/button';
 
 export default function Alerts() {
   const { alerts, loading, refreshAlerts } = useAlerts();
   const [selectedAlert, setSelectedAlert] = useState(null);
 
-  const fetchAlerts = refreshAlerts;
-
   const handleMarkAsRead = async (alertId) => {
     try {
       await api.patch(`/analytics/alerts/${alertId}/read`);
-      // Update local state
-      setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, is_read: true } : a));
+      await refreshAlerts();
     } catch (error) {
       console.error("Failed to mark alert as read", error);
     }

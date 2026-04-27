@@ -21,6 +21,7 @@ jobs:
           command_timeout: 30m
           script: |
             set -e # Stop script on any error
+            BRANCH_NAME="${{ github.ref_name }}"
             
             # Setup Swap space to prevent Out Of Memory errors during Docker React Build on 1GB instances
             if [ ! -f /swapfile ]; then
@@ -39,8 +40,8 @@ jobs:
             
             # Fetch and pull the latest changes
             git fetch origin
-            git checkout Group-D-feature/AWS-deployement-ameen
-            git pull origin Group-D-feature/AWS-deployement-ameen
+            git checkout "$BRANCH_NAME"
+            git pull origin "$BRANCH_NAME"
             
             # Export secrets as environment variables before building/running
             export GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"

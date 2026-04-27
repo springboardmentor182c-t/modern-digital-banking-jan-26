@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import api from '../../../api/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
-import { formatDateTime, cn } from '../../../lib/utils';
-import { AlertCircle, CheckCircle, Info, AlertTriangle, Bell, Trash2, Wallet } from 'lucide-react';
+import { cn } from '../../../lib/utils';
+import { AlertCircle, CheckCircle, Info, AlertTriangle, Bell, Wallet } from 'lucide-react';
 
 export default function SystemAlerts() {
-    // --- API LOGIC ADDED HERE ---
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Fetching real alerts from the backend main.py logic
-        fetch('http://localhost:8000/api/admin/alerts')
-            .then(res => res.json())
-            .then(data => {
-                setAlerts(data.alerts);
+        api.get('/admin/alerts')
+            .then(({ data }) => {
+                const nextAlerts = Array.isArray(data) ? data : data.alerts ?? [];
+                setAlerts(nextAlerts);
                 setLoading(false);
             })
             .catch(err => {
