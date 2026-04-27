@@ -10,15 +10,29 @@ from src.analytics.router import router as analytics_router
 from src.ai_insights.router import router as ai_insights_router
 from src.ai_budget.router import router as ai_budget_router
 
+# ✅ ADD THESE TWO LINES
+from src.database import Base, engine
+
 app = FastAPI(title="NeoVault API")
 
 app.add_middleware(
     CORSMiddleware,
+<<<<<<< Updated upstream
     allow_origins=["*"],
     allow_credentials=False,
+=======
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"],
+    allow_credentials=True,
+>>>>>>> Stashed changes
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ✅ CREATE TABLES ON STARTUP
+@app.on_event("startup")
+async def startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 @app.get("/health")
 def health():
@@ -29,6 +43,7 @@ app.include_router(accounts_router, prefix="/accounts", tags=["Accounts"])
 app.include_router(transactions_router, prefix="/transactions", tags=["Transactions"])
 app.include_router(budgets_router, prefix="/budgets", tags=["Budgets"])
 app.include_router(bills_router, prefix="/bills", tags=["Bills & Rewards"])
+<<<<<<< Updated upstream
 app.include_router(analytics_router, prefix="/analytics", tags=["Analytics & Alerts"])
 # --- : ADMIN MODULE LOGIC ---
 
@@ -58,3 +73,6 @@ def get_budget_alerts():
     ]
 app.include_router(ai_insights_router, prefix="/ai-insights", tags=["AI Insights"])
 app.include_router(ai_budget_router, prefix="/ai", tags=["AI Budget"])
+=======
+app.include_router(analytics_router, prefix="/analytics", tags=["Analytics & Alerts"])
+>>>>>>> Stashed changes
