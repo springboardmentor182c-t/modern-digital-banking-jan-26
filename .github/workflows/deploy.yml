@@ -21,6 +21,24 @@ jobs:
           command_timeout: 30m
           script: |
             set -e # Stop script on any error
+
+            REPO_DIR="$HOME/modern-digital-banking-jan-26"
+            DEPLOY_BRANCH="${{ github.ref_name }}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+
+            cleanup_disk() {
+              sudo journalctl --vacuum-size=50M || true
+              sudo apt-get clean || true
+              sudo rm -rf /var/lib/apt/lists/* || true
+              rm -rf "$HOME/.cache/pip" "$HOME/.npm/_cacache" || true
+              docker system prune -a --volumes -f || true
+              docker builder prune -af || true
+            }
+
+            reclone_repo() {
+              rm -rf "$REPO_DIR"
+              git clone --branch "$DEPLOY_BRANCH" --depth 1 "$REPO_URL" "$REPO_DIR"
+            }
             
             # Setup Swap space to prevent Out Of Memory errors during Docker React Build on 1GB instances
             if [ ! -f /swapfile ]; then
@@ -28,40 +46,40 @@ jobs:
               sudo chmod 600 /swapfile
               sudo mkswap /swapfile
               sudo swapon /swapfile
+            elif ! sudo swapon --show | grep -q '/swapfile'; then
+              sudo swapon /swapfile || true
             fi
-            
-            # Navigate to the target directory (or clone if it doesn't exist)
-            if [ ! -d "modern-digital-banking-jan-26" ]; then
-              git clone https://github.com/${{ github.repository }}.git modern-digital-banking-jan-26
+
+            # Stop the running stack before cleanup so Docker can release space.
+            if [ -f "$REPO_DIR/docker-compose.prod.yml" ]; then
+              docker compose -f "$REPO_DIR/docker-compose.prod.yml" down || true
             fi
-            
-            cd modern-digital-banking-jan-26
-            
-            # Fetch and pull the latest changes
-            git fetch origin
-            git checkout Group-D-feature/AWS-deployement-ameen
-            git pull origin Group-D-feature/AWS-deployement-ameen
-            
+
+            # Free disk space before any git operation so fetch/clone can succeed.
+            df -h
+            cleanup_disk
+            df -h
+
+            if [ -d "$REPO_DIR/.git" ]; then
+              if git -C "$REPO_DIR" fetch --depth 1 origin "$DEPLOY_BRANCH"; then
+                git -C "$REPO_DIR" checkout -B "$DEPLOY_BRANCH" FETCH_HEAD
+                git -C "$REPO_DIR" reset --hard FETCH_HEAD
+                git -C "$REPO_DIR" clean -fd
+              else
+                reclone_repo
+              fi
+            else
+              reclone_repo
+            fi
+
+            cd "$REPO_DIR"
+
             # Export secrets as environment variables before building/running
             export GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
-            
-            # Print disk space before cleanup
+
+            # One more cleanup pass after the repo is updated and before rebuilding.
+            cleanup_disk
             df -h
-            
-            # Aggressive System Cleanup
-            sudo journalctl --vacuum-size=50M || true
-            sudo apt-get clean || true
-            sudo rm -rf /var/lib/apt/lists/* || true
-            
-            # Build and restart containers using Docker Compose
-            docker compose -f docker-compose.prod.yml down || true
-            
-            # Cleanup unused docker images and volumes to save space BEFORE building
-            docker system prune -a --volumes -f
-            docker builder prune -af
-            
-            # Print disk space after cleanup
-            df -h
-            
+
             docker compose -f docker-compose.prod.yml build
             docker compose -f docker-compose.prod.yml up -d
