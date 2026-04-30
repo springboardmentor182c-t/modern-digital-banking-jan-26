@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Add AI budget tracking columns to budgets table
-    op.add_column('budgets', sa.Column('is_ai_generated', sa.Boolean(), nullable=True, server_default=sa.text('0')))
+    op.add_column('budgets', sa.Column('is_ai_generated', sa.Boolean(), nullable=True, server_default=sa.false()))
     op.add_column('budgets', sa.Column('confidence_score', sa.Float(), nullable=True))
 
 
