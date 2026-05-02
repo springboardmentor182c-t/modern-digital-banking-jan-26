@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main-group-D-new
-      - Group-D-feature/AWS-deployement-ameen # Trigger on push to this branch for testing
   workflow_dispatch:
 
 jobs:
   deploy:
+    if: github.ref_name == 'main-group-D-new'
     runs-on: ubuntu-latest
     
     steps:
