@@ -397,18 +397,17 @@ async def generate_budget_recommendations(
             len(anomaly_indices), predicted_spend, recommended_limit
         )
 
-        if current_budget is None:
-            recommendations.append({
-                "category": category,
-                "recommended_limit": recommended_limit,
-                "confidence": confidence,
-                "reasoning": reasoning,
-                "current_budget": current_budget,
-                "predicted_spend": round(predicted_spend, 2),
-                "trend": trend,
-                "avg_monthly_spend": round(avg, 2),
-                "is_essential": is_essential
-            })
+        recommendations.append({
+            "category": category,
+            "recommended_limit": recommended_limit,
+            "confidence": confidence,
+            "reasoning": reasoning,
+            "current_budget": current_budget,
+            "predicted_spend": round(predicted_spend, 2),
+            "trend": trend,
+            "avg_monthly_spend": round(avg, 2),
+            "is_essential": is_essential
+        })
 
         total_recommended += recommended_limit
 

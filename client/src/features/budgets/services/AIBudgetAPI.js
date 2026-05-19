@@ -36,7 +36,7 @@ export const acceptAIRecommendation = async (recommendation) => {
 
     // Try to create; if it already exists (400), update via the generate endpoint
     try {
-        const response = await api.post('/budgets/', budgetData);
+        const response = await api.post('/budgets', budgetData);
         return response.data;
     } catch (error) {
         if (error.response?.status === 400) {
