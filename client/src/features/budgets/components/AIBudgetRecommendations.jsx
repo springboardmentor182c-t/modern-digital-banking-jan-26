@@ -47,12 +47,14 @@ export default function AIBudgetRecommendations({ refreshBudgets }) {
   // Accept a single recommendation
   const handleAccept = useCallback(async (recommendation) => {
     setAccepting(recommendation.category);
+    setError(null);
     try {
       await acceptAIRecommendation(recommendation);
       setDismissed(prev => new Set([...prev, recommendation.category]));
-      if (refreshBudgets) refreshBudgets();
+      if (refreshBudgets) await refreshBudgets();
     } catch (err) {
       console.error('Failed to accept recommendation:', err);
+      setError('Failed to add this recommendation to budgets. Please try again.');
     } finally {
       setAccepting(null);
     }

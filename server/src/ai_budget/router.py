@@ -11,6 +11,7 @@ from src.ai_budget.schemas import (
     BudgetRecommendation,
     PredictionAlert
 )
+from src.budgets.schemas import BudgetResponse
 from src.ai_budget.service import (
     generate_budget_recommendations,
     save_ai_budgets,
@@ -51,6 +52,31 @@ async def generate_budget(
         await create_prediction_alerts(db, current_user.id, result["alerts"])
 
     return result
+
+
+@router.post("/accept-budget", response_model=BudgetResponse)
+async def accept_budget_recommendation(
+    recommendation: BudgetRecommendation,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Persist a single AI recommendation as the authenticated user's budget.
+    Existing budgets for the same category/month are updated.
+    """
+    now = datetime.now()
+    saved = await save_ai_budgets(
+        db,
+        current_user.id,
+        [recommendation.model_dump()],
+        month=now.month,
+        year=now.year
+    )
+
+    if not saved:
+        raise HTTPException(status_code=400, detail="No recommendation was saved")
+
+    return saved[0]
 
 
 @router.get("/budget-recommendation/{user_id}", response_model=AIBudgetResponse)

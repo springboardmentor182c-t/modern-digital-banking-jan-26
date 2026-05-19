@@ -26,25 +26,6 @@ export const getAIRecommendations = async (userId) => {
  * @param {object} recommendation - The recommendation object
  */
 export const acceptAIRecommendation = async (recommendation) => {
-    const now = new Date();
-    const budgetData = {
-        category: recommendation.category,
-        limit_amount: recommendation.recommended_limit,
-        month: now.getMonth() + 1,
-        year: now.getFullYear()
-    };
-
-    // Try to create; if it already exists (400), update via the generate endpoint
-    try {
-        const response = await api.post('/budgets', budgetData);
-        return response.data;
-    } catch (error) {
-        if (error.response?.status === 400) {
-            // Budget already exists — use AI generate with save=true
-            // This will update the existing budget
-            const result = await api.post('/ai/generate-budget', { save: true });
-            return result.data;
-        }
-        throw error;
-    }
+    const response = await api.post('/ai/accept-budget', recommendation);
+    return response.data;
 };

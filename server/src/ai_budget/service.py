@@ -484,6 +484,8 @@ async def save_ai_budgets(
             saved.append(new_budget)
 
     await db.commit()
+    for budget in saved:
+        await db.refresh(budget)
     return saved
 
 
